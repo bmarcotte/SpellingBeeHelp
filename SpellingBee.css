@@ -1,0 +1,63 @@
+#initialize {
+  margin-right: 4ch;
+  margin-top: 0.5h;
+}
+
+#metastats1 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 95%;
+  width: fit-content;
+  text-align: right;
+  margin-left: 7ch;
+}
+
+#metastats2 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+  text-align: left;
+  width: 15ch;
+}
+/* HELP - I can't seem to get the margins to set in the METASTATS, so
+I put spaces into the HTML. */
+
+#metastats3 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 95%;
+  width: fit-content;
+  text-align: right;
+}
+
+#metastats4 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+  text-align: right;
+  margin-right: 2ch;
+}
+
+#update-tables {
+  margin-left: 4ch;
+  margin-top: -2ch;
+}
+
+table {
+  margin-left: 3ch;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+}
+
+table td {
+  height: 1ch;
+  width: 3ch;
+  margin-left: 5ch;
+  margin-right: 5ch;
+  text-align: center;
+}
+#hints {
+  height: 100ch;
+  width:90ch;
+}
+
+#main {
+  height: 110ch;
+  width: 60ch;
+}
