@@ -1,25 +1,60 @@
-'use strict'
+(() => {            // OUTER SHELL
+'use strict';
+alert('Bookmarklet works');
+/*
+//======================================
+// GET HINTS HTML
+//======================================
+
+// const date = new Date(document.querySelector('.pz-game-date').textContent);
+// const hintsUrl = 'https://www.nytimes.com/' +
+//     date.toISOString().slice(0, 10).replaceAll('-', '/') +
+//     '/crosswords/spelling-bee-forum.html';
+
+// KLUDGE FOR DEVELOPMENT
+const hintsUrl = 'C:/Users/neuch/OneDrive/Documents/JavaScript/SpellingBeeHelp/Hints.html';
+
+fetch(hintsUrl).then(response => response.text()).then(html => {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const hints = div.querySelector('.interactive-body > div');
+  main(hints);
+  alert(hints.slice(0,88));
+});
+
 
 //======================================
-// GLOBAL VARIABLES
+// MAIN FUNCTION
 //======================================
 
-const El = {
-    Wrapper: document.getElementById('wrapper'),
-    InitHints: document.getElementById('init_hints'),   // temporary
-    UpdateList: document.getElementById('update_list'), // temporary
-    MetaStats1: document.getElementById('metastats1'),
-    MetaStats2: document.getElementById('metastats2'),
-    MetaStats3: document.getElementById('metastats3'),
-    MetaStats4: document.getElementById('metastats4'),
-    Table: document.getElementById('table0'),
-    MainHTML: document.getElementById('main'),          // temporary
-    HintsHTML: document.getElementById('hints'),        // temporary
-}
+function main(hints) {
+    const paragraphs = hints.querySelectorAll('p');
+    const letters = paragraphs[1].textContent.replace(/\s/g, '');
+    alert(letters);
+    // Initialize
+  
+  
+
+//--------------------------------------
+// MAIN VARIABLES
+//--------------------------------------
+
+// const El = {
+    // Wrapper: document.getElementById('wrapper'),        // temporary
+    // InitHints: document.getElementById('init_hints'),   // temporary
+    // UpdateList: document.getElementById('update_list'), // temporary
+    // MetaStats1: document.getElementById('metastats1'),
+    // MetaStats2: document.getElementById('metastats2'),
+    // MetaStats3: document.getElementById('metastats3'),
+    // MetaStats4: document.getElementById('metastats4'),
+    // Table: document.getElementById('table'),
+    // MainHTML: document.getElementById('main'),          // temporary
+    // HintsHTML: document.getElementById('hints'),        // temporary
+// }
 
 let Char1Obj = {            // Char1List obj
     char1: '',
-    rowStart: 0,            // letter subtotals, row in Table
+    rowStart: 0,            // letter subtotals row in Table
     rowEnd: 0,              // last data row in Table, not col totals
     count: [],              // word length subtotals
     total: 0,               // total number of words
@@ -61,8 +96,6 @@ let Spacer = ['', '', '', '',];
 let Header = ['', '', '', ''];
 let Cell = [];              // holds element references for Table
 let Table = [];             // holds display data
-let TableInitialized = false;
-let TableCopy = 0;          // for resetting entire set of data
 const ColStart = 4;         // table dimensions
 let ColEnd = 0;
 let TableTotalRows = 0;
@@ -76,40 +109,23 @@ let Points = 0;
 let Genius = 0;
 let LetterList = "";        // needed to find pangrams
 
+const date = new Date(document.querySelector('pz-game-date').textContent);
+const hintsUrl = 'https://www.nytimes.com/' +
+    date.toISOString().slice(0, 10).replaceAll('-', '/') +
+    '/crosswords/spelling-bee-forum.html';
+    alert(hintsUrl);
+
 let MainHTML = '';          // Spelling Bee main program HTML
 let HintsHTML = '';         // Today's Hints HTML
 let GameDate = '';
 let DataInput = [];         // list of found words
 let ProcessedWords = [];    // list of already tabulated words
 
-//======================================
-// MAIN PROGRAM
-//======================================
-
-El.InitHints.addEventListener('click', InitialazeHints);
-El.UpdateList.addEventListener('click', UpdateList);
-
-//======================================
-// MAIN FUNCTION:  CREATE TABLES FROM TODAY'S HINTS
-//======================================
-
 // -------------------------------------
-function InitialazeHints () {
+function InitializeHints () {
 // -------------------------------------
     let index;
     let temp;
-
-    // Validity check
-    if (TableInitialized) {     // CHECK THE DATE -> return if same; reset if different
-        OpenMain();
-        if (ExtractDate() != GameDate) {
-            ResetData();
-        } else return;
-    }
-
-    // Get raw data from Spelling Bee HTML files
-    OpenMain();
-    OpenHints();
 
     // MetaStats
     index = HintsHTML.indexOf("</p>", HintsHTML.indexOf(" Center letter is in "));
@@ -150,32 +166,10 @@ function InitialazeHints () {
     return;
 }
 
-function OpenMain () {              // temporary
-    MainHTML = El.MainHTML.value;
-    return;
-}
-
-function OpenHints () {             // temporary
-    GameDate = ExtractDate();
-    let fileName = "https://www.nytimes.com/" + GameDate + "/crosswords/spelling-bee-forum.html";
-    HintsHTML = El.HintsHTML.value;
-    return;
-}
-
-function ExtractDate() {        // returns date in format YYYY/MM/DD
-    let monthList = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    let dateStr = GetHTMLelement('<span class="pz-game-date">', MainHTML, MainHTML.indexOf('<em class="pz-game-title">Spelling Bee</em>'));
-    let dateArr = dateStr.split(/[^A-Za-z0-9]+/).filter(x => x);
-    dateArr[0] = String(monthList.indexOf(dateArr[0]) + 1);
-    if (dateArr[0].length == 1) dateArr[0] = "0" + dateArr[0];
-    if (dateArr[1].length == 1) dateArr[1] = "0" + dateArr[1];
-    return dateArr[2] + "/" + dateArr[0] + "/" + dateArr[1];
-}
-
 function GetChar1Table () {
     let TRstart;
     let TRend;
-    let index = HintsHTML.indexOf('<table>', HintsHTML.indexOf('<title>Spelling Bee Forum Grid Generator</title>'));
+    let index = HintsHTML.indexOf('<table>', HintsHTML.indexOf('Center letter is in'));
     let text = HintsHTML.slice(index, HintsHTML.indexOf('</table>', index) + 8);
     TRstart = Array.from(text.matchAll("<tr>"));
     TRend = Array.from(text.matchAll("</tr>"));
@@ -246,8 +240,8 @@ function GetCharLists () {
             Table.push(temp);
             ch2Indx++;
             row++;
-        }                                     // Summary line
-        temp = ['Σ', Char1Table[chTableIndx][char1TableLen - 1], 0, ''];
+        }                                     // Summary line  >>>> MOVE THIS JUST BELOW LETTER SUBTOTAL LINE
+        temp = ['Σ', Char1Table[chTableIndx][char1TableLen - 1], 0, ''];      // change to ['', Char1List[indexList1].total, 0, 'Σ']
         temp.length = ColEnd + 1;
         temp.fill(0, 4, ColEnd + 1);
         Table.push(temp);
@@ -322,7 +316,6 @@ function ResetData () {
         LetterList = "";
         MainHTML = '';
         HintsHTML = '';
-        GameDate = '';
         TableInitialized = false;
 
         UpdateMetaStats ();
@@ -361,7 +354,6 @@ function UpdateList () {
 }
 
 function GetWordList () {   // returns list of all FOUND WORDS in DatInput
-    OpenMain ();            // ?temporary?
     let text = MainHTML;
     let index = text.indexOf('<ul class="sb-wordlist-items-pag">');
     text = text.slice(index, text.indexOf('</ul>', index) + 5);
@@ -462,5 +454,10 @@ function GetHTMLelement (key, text, index) {
         }
         return text.slice(index2, index3);
     }
-    
+}       // end of main function  
+
+*/
+
+})();   // end of outer shell function
+
     
