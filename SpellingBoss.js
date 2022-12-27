@@ -457,6 +457,6 @@ function GetHTMLelement (key, text, index) {
 
 */
 
-})();   // end of outer shell function
+// })();   // end of outer shell function
 
     
