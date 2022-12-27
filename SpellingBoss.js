@@ -1,7 +1,7 @@
 (() => {            // OUTER SHELL
 'use strict';
 alert('Bookmarklet works');
-/*
+
 //======================================
 // GET HINTS HTML
 //======================================
@@ -18,11 +18,11 @@ fetch(hintsUrl).then(response => response.text()).then(html => {
   const div = document.createElement('div');
   div.innerHTML = html;
   const hints = div.querySelector('.interactive-body > div');
-  main(hints);
+//   main(hints);
   alert(hints.slice(0,88));
 });
 
-
+/*
 //======================================
 // MAIN FUNCTION
 //======================================
