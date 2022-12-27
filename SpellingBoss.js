@@ -6,11 +6,12 @@ alert('Bookmarklet works');
 // GET HINTS HTML
 //======================================
 
-// const date = new Date(document.querySelector('.pz-game-date').textContent);
-// const hintsUrl = 'https://www.nytimes.com/' +
-//     date.toISOString().slice(0, 10).replaceAll('-', '/') +
-//     '/crosswords/spelling-bee-forum.html';
+const date = new Date(document.querySelector('.pz-game-date').textContent);
+const hintsUrl = 'https://www.nytimes.com/' +
+    date.toISOString().slice(0, 10).replaceAll('-', '/') +
+    '/crosswords/spelling-bee-forum.html';
 
+    alert('hintsUrl');
 // KLUDGE FOR DEVELOPMENT
 const hintsUrl = 'C:/Users/neuch/OneDrive/Documents/JavaScript/SpellingBeeHelp/Hints.html';
 
