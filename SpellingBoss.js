@@ -1,6 +1,5 @@
 (() => {            // OUTER SHELL
 'use strict';
-alert('Bookmarklet works');
 
 //======================================
 // GET HINTS HTML
@@ -10,20 +9,15 @@ const date = new Date(document.querySelector('.pz-game-date').textContent);
 const hintsUrl = 'https://www.nytimes.com/' +
     date.toISOString().slice(0, 10).replaceAll('-', '/') +
     '/crosswords/spelling-bee-forum.html';
-
-    alert('hintsUrl');
-// KLUDGE FOR DEVELOPMENT
-const hintsUrl = 'C:/Users/neuch/OneDrive/Documents/JavaScript/SpellingBeeHelp/Hints.html';
+    alert(hintsUrl);
 
 fetch(hintsUrl).then(response => response.text()).then(html => {
   const div = document.createElement('div');
   div.innerHTML = html;
   const hints = div.querySelector('.interactive-body > div');
-//   main(hints);
-  alert(hints.slice(0,88));
+  main(hints);
 });
 
-/*
 //======================================
 // MAIN FUNCTION
 //======================================
@@ -32,6 +26,10 @@ function main(hints) {
     const paragraphs = hints.querySelectorAll('p');
     const letters = paragraphs[1].textContent.replace(/\s/g, '');
     alert(letters);
+    return;
+}       // end of main function  
+})();
+/*
     // Initialize
   
   
