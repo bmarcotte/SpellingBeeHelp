@@ -1,34 +1,75 @@
 (() => {            // OUTER SHELL
 'use strict';
 
+main();
+
 //======================================
-// GET HINTS HTML PAGE
+// GET DATA FROM SPELLING BEE PAGE
 //======================================
 
-const date = new Date(document.querySelector('.pz-game-date').textContent);
-const hintsUrl = 'https://www.nytimes.com/' +
-    date.toISOString().slice(0, 10).replaceAll('-', '/') +
-    '/crosswords/spelling-bee-forum.html';
+// const date = new Date(document.querySelector('.pz-game-date').textContent);
+// const hintsUrl = 'https://www.nytimes.com/' +
+//     date.toISOString().slice(0, 10).replaceAll('-', '/') +
+//     '/crosswords/spelling-bee-forum.html';
 
-fetch(hintsUrl).then(response => response.text()).then(html => {
-    const div = document.createElement('div');
-    div.innerHTML = html;                                         // translates string to DOM
-    const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
-    main(hints);
-    // main(html);
-});
+// fetch(hintsUrl).then(response => response.text()).then(html => {
+//     const div = document.createElement('div');
+//     div.innerHTML = html;                                         // translates string to DOM
+//     const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
+//     main(hints);
+// });
 
+ async function getHints() {
+    const date = new Date(document.querySelector('.pz-game-date').textContent);
+    const hintsUrl = 'https://www.nytimes.com/' +
+        date.toISOString().slice(0, 10).replaceAll('-', '/') +
+        '/crosswords/spelling-bee-forum.html';
+  
+    const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
+        const div = document.createElement('div');
+        div.innerHTML = html;                                       // translates string to DOM
+        return div.querySelector('.interactive-body > div');        // . = css selector; # = id selector
+    });
+    return hints;
+  }
+  
+  async function getGeniusScore() {
+    document.querySelector('[title="Click to see today’s ranks"]').click();
+    let element = await waitForElement('.sb-modal-list li:last-of-type');
+    let score = element.innerText.replace(/\D/g, '');
+    document.querySelector('.sb-modal-close').click();
+    return score;
+  }
+  
+  function waitForElement(selector) {
+    return new Promise(resolveElement => {
+  
+      const checkForElement = () => {
+        let element = document.querySelector(selector);
+        if (element) {
+          resolveElement(element);
+        } else {
+          setTimeout(checkForElement, 10);
+        }
+      };
+  
+      checkForElement();
+    });
+  }
+  
 //======================================
 // MAIN FUNCTION
 //======================================
 
-function main(HintsHTML) {
-
+async function main() {
     //--------------------------------------
     // MAIN CONSTANTS AND VARIABLES
     //--------------------------------------
 
+    const HintsHTML = await getHints();     // data from Spelling Bee page
+    const GeniusScore = await getGeniusScore();
     const hintDiv = setUpHintDiv();         // initialize DOM
+
     const El = {
         MetaStats1: document.getElementById('metastats1'),
         MetaStats2: document.getElementById('metastats2'),
@@ -36,6 +77,7 @@ function main(HintsHTML) {
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
         WordList: document.querySelector('.sb-wordlist-items-pag'),
+        GeniusPoints: document.querySelector('.pz-dropdown__list'),
      }
 
     let Char1Obj = {            // Char1List obj
@@ -74,7 +116,7 @@ function main(HintsHTML) {
     let Paragraphs;
     let Char1List = [];         // holds index pointers into Table
     let Char2List = [];
-    let Char1Table = {};        // raw data tables
+    let Char1Table = {};        // temporary raw data tables
     let Char2Table = [];
 
     let LineBreak = ['-', '-', '-', '-'];
@@ -93,10 +135,7 @@ function main(HintsHTML) {
     let Pangrams = 0;
     let PangramsFound = 0;
     let Points = 0;
-    let Genius = 0;
     let LetterList = "";        // needed to find pangrams
-
-    let MainHTML = '';          // Spelling Bee main program HTML
     let ProcessedWords = [];    // list of already tabulated words
 
     // -------------------------------------
@@ -106,7 +145,6 @@ function main(HintsHTML) {
     InitializeHints ();
 
     // Update tables on event - addition to Word List
-    El.WordList  = document.querySelector('.sb-wordlist-items-pag');
     const observer = new MutationObserver(() => {
         UpdateList();
     });
@@ -116,79 +154,6 @@ function main(HintsHTML) {
 // SUPPORTING FUNCTIONS
 //======================================
 
-    // -------------------------------------
-    // Create DOM for our added HTML
-    // -------------------------------------
-    function setUpHintDiv() {
-        const gameScreen = document.querySelector('.pz-game-screen');
-        const parent = gameScreen.parentElement;
-    
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.append(gameScreen);
-        parent.append(container);
-    
-        const hintDiv = document.createElement('div');
-        hintDiv.style.padding = '12px';
-        container.append(hintDiv);
-    
-        // Our added HTML
-        hintDiv.innerHTML = `
-        <table>
-            <td id="metastats1">Total points:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
-            <td id="metastats2"></td>
-            <td id="metastats3">Genius:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
-            <td id="metastats4"></td>
-        </table>
-        <table id="table0"></table>
-        <style>
-        #metastats1 {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 90%;
-            width: 20ch;
-            margin-left: 1ch;
-            text-align: right;
-        }
-        #metastats2 {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 90%;
-            text-align: left;
-            width: 14ch;
-        }
-        #metastats3 {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 90%;
-            width: 16ch;
-            margin-left: 1ch;
-            text-align: right;
-        }
-        #metastats4 {
-            font-family: Arial, Helvetica, sans-serif;
-            margin-left: 1ch;
-            font-size: 90%;
-            text-align: right;
-        }
-        #table0 {
-            margin-left: 3ch;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: medium;
-        }
-        
-        #table0 td {
-            height: 1ch;
-            width: 3ch;
-            margin-left: 5ch;
-            margin-right: 5ch;
-            text-align: center;
-        }
-        .separator {
-            border-bottom: 1px solid black;
-        }
-        </style>
-        `;
-        return hintDiv;
-    }
-    
     // -------------------------------------
     // Read HINTS page and generate all tables
     // -------------------------------------
@@ -207,16 +172,20 @@ function main(HintsHTML) {
                 if (item[i] === '-') item[i] = 0;
             }
         })
-        // for (let row of rawCharData.slice(1, -1)) {  // Char1Table references above were raw data
-        //     const letter = row[0][0].toUpperCase();  // This loop produces an object of clean data
-        //     let charCounts = [];
-        //     for (let i = 0; i < WordLengths.length; i++) {
-        //         const wordLength = WordLengths[i];
-        //         charCounts[wordLength] = Number(row[i + 1]) || 0;
-        //     }
-        //     Char1Table[letter] = charCounts;
-        // }
-
+/*
+// Char1Table references above were raw data
+// This loop produces an object of clean data
+// This technique could be used to reference row from Char2
+for (let row of rawCharData.slice(1, -1)) {
+    const letter = row[0][0].toUpperCase();
+    let charCounts = [];
+    for (let i = 0; i < WordLengths.length; i++) {
+        const wordLength = WordLengths[i];
+        charCounts[wordLength] = Number(row[i + 1]) || 0;
+    }
+    Char1Table[letter] = charCounts;
+}
+*/
         // MetaStats
         Paragraphs  = HintsHTML.querySelectorAll('p');
         LetterList = Paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
@@ -225,10 +194,7 @@ function main(HintsHTML) {
             Points = temp[2];
             Pangrams = temp[3];
                 if (temp[4] > 0) Pangrams = Pangrams + ' (' + temp[4] + ' Perfect)';
-        // TO DO: NEED TO POP-UP PAGE TO EXTRACT GENIUS POINTS
-        // index = MainHTML.indexOf('</span>', MainHTML.indexOf('<span class="sb-modal-rank">Genius</span>'));
-        //     Genius = GetHTMLelement('</span>', MainHTML, index).split(/[^0-9]+/)[1];
-         UpdateMetaStats();
+        UpdateMetaStats();
 
         // Linebreak, Spacer, Header row templates
         ColEnd = WordLengths.length + 3;
@@ -350,7 +316,79 @@ function main(HintsHTML) {
         }
         return;
     }
-            
+    // -------------------------------------
+    // Create DOM for our added HTML
+    // -------------------------------------
+    function setUpHintDiv() {
+        const gameScreen = document.querySelector('.pz-game-screen');
+        const parent = gameScreen.parentElement;
+    
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.append(gameScreen);
+        parent.append(container);
+    
+        const hintDiv = document.createElement('div');
+        hintDiv.style.padding = '12px';
+        container.append(hintDiv);
+    
+        // Our added HTML
+        hintDiv.innerHTML = `
+        <table>
+            <td id="metastats1">Total points:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
+            <td id="metastats2"></td>
+            <td id="metastats3">Genius:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
+            <td id="metastats4"></td>
+        </table>
+        <table id="table0"></table>
+        <style>
+        #metastats1 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 90%;
+            width: 20ch;
+            margin-left: 1ch;
+            text-align: right;
+        }
+        #metastats2 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 90%;
+            text-align: left;
+            width: 14ch;
+        }
+        #metastats3 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 90%;
+            width: 16ch;
+            margin-left: 1ch;
+            text-align: right;
+        }
+        #metastats4 {
+            font-family: Arial, Helvetica, sans-serif;
+            margin-left: 1ch;
+            font-size: 90%;
+            text-align: right;
+        }
+        #table0 {
+            margin-left: 3ch;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: medium;
+        }
+        
+        #table0 td {
+            height: 1ch;
+            width: 3ch;
+            margin-left: 5ch;
+            margin-right: 5ch;
+            text-align: center;
+        }
+        .separator {
+            border-bottom: 1px solid black;
+        }
+        </style>
+        `;
+        return hintDiv;
+    }
+
 //======================================
 // MAIN SUPPORTING FUNCTION:  UPDATE TABLES FROM FOUND WORDS
 //======================================
@@ -389,6 +427,7 @@ function main(HintsHTML) {
         return outputList;
     }
 
+    // TO DO:  ONLY WORKS ON BOTTOM ROW OF EACH CHAR1 TABLE
     function DoneIsGray () {    // grays out completed rows and columns
         for (let i = 0; i < Char1List.length; i++) {
             // check for completed rows
@@ -447,7 +486,7 @@ function main(HintsHTML) {
 
     function UpdateMetaStats () {
         El.MetaStats2.innerHTML = Points + '<br>' + Pangrams + `<br>` + PangramsFound;
-        El.MetaStats4.innerHTML = Genius + '<br>' + WordsTotal + `<br>` + WordsFound;
+        El.MetaStats4.innerHTML = GeniusScore + '<br>' + WordsTotal + `<br>` + WordsFound;
         return;
     }
 
