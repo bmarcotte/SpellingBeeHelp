@@ -4,64 +4,11 @@
 main();
 
 //======================================
-// GET DATA FROM SPELLING BEE PAGE
-//======================================
-
-// const date = new Date(document.querySelector('.pz-game-date').textContent);
-// const hintsUrl = 'https://www.nytimes.com/' +
-//     date.toISOString().slice(0, 10).replaceAll('-', '/') +
-//     '/crosswords/spelling-bee-forum.html';
-
-// fetch(hintsUrl).then(response => response.text()).then(html => {
-//     const div = document.createElement('div');
-//     div.innerHTML = html;                                         // translates string to DOM
-//     const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
-//     main(hints);
-// });
-
- async function getHints() {
-    const date = new Date(document.querySelector('.pz-game-date').textContent);
-    const hintsUrl = 'https://www.nytimes.com/' +
-        date.toISOString().slice(0, 10).replaceAll('-', '/') +
-        '/crosswords/spelling-bee-forum.html';
-  
-    const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
-        const div = document.createElement('div');
-        div.innerHTML = html;                                       // translates string to DOM
-        return div.querySelector('.interactive-body > div');        // . = css selector; # = id selector
-    });
-    return hints;
-  }
-  
-  async function getGeniusScore() {
-    document.querySelector('[title="Click to see today’s ranks"]').click();
-    let element = await waitForElement('.sb-modal-list li:last-of-type');
-    let score = element.innerText.replace(/\D/g, '');
-    document.querySelector('.sb-modal-close').click();
-    return score;
-  }
-  
-  function waitForElement(selector) {
-    return new Promise(resolveElement => {
-  
-      const checkForElement = () => {
-        let element = document.querySelector(selector);
-        if (element) {
-          resolveElement(element);
-        } else {
-          setTimeout(checkForElement, 10);
-        }
-      };
-  
-      checkForElement();
-    });
-  }
-  
-//======================================
 // MAIN FUNCTION
 //======================================
 
 async function main() {
+    
     //--------------------------------------
     // MAIN CONSTANTS AND VARIABLES
     //--------------------------------------
@@ -77,7 +24,6 @@ async function main() {
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
         WordList: document.querySelector('.sb-wordlist-items-pag'),
-        GeniusPoints: document.querySelector('.pz-dropdown__list'),
      }
 
     let Char1Obj = {            // Char1List obj
@@ -151,7 +97,61 @@ async function main() {
     observer.observe(El.WordList, {childList: true});
 
 //======================================
-// SUPPORTING FUNCTIONS
+// GET DATA FROM SPELLING BEE PAGE
+//======================================
+
+// const date = new Date(document.querySelector('.pz-game-date').textContent);
+// const hintsUrl = 'https://www.nytimes.com/' +
+//     date.toISOString().slice(0, 10).replaceAll('-', '/') +
+//     '/crosswords/spelling-bee-forum.html';
+
+// fetch(hintsUrl).then(response => response.text()).then(html => {
+//     const div = document.createElement('div');
+//     div.innerHTML = html;                                         // translates string to DOM
+//     const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
+//     main(hints);
+// });
+
+async function getHints() {
+    const date = new Date(document.querySelector('.pz-game-date').textContent);
+    const hintsUrl = 'https://www.nytimes.com/' +
+        date.toISOString().slice(0, 10).replaceAll('-', '/') +
+        '/crosswords/spelling-bee-forum.html';
+  
+    const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
+        const div = document.createElement('div');
+        div.innerHTML = html;                                       // translates string to DOM
+        return div.querySelector('.interactive-body > div');        // . = css selector; # = id selector
+    });
+    return hints;
+  }
+  
+  async function getGeniusScore() {
+    document.querySelector('[title="Click to see today’s ranks"]').click();
+    let element = await waitForElement('.sb-modal-list li:last-of-type');
+    let score = element.innerText.replace(/\D/g, '');
+    document.querySelector('.sb-modal-close').click();
+    return score;
+  }
+  
+  function waitForElement(selector) {
+    return new Promise(resolveElement => {
+  
+      const checkForElement = () => {
+        let element = document.querySelector(selector);
+        if (element) {
+          resolveElement(element);
+        } else {
+          setTimeout(checkForElement, 10);
+        }
+      };
+  
+      checkForElement();
+    });
+  }
+  
+//======================================
+// MAIN SUPPORTING FUNCTION: INITIALIZE HINTS
 //======================================
 
     // -------------------------------------
@@ -159,7 +159,6 @@ async function main() {
     // -------------------------------------
     function InitializeHints () {
         let temp;
-
         // Convert raw data to Chap1Table
         Char1Table = [...HintsHTML.querySelectorAll('table tr')]
             .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));
@@ -168,8 +167,10 @@ async function main() {
         Char1Table.pop();           // eliminate first and last rows
         Char1Table.shift();
         Char1Table.forEach(item => {
+            item[0] = item[0][0].toUpperCase();
             for (let i = 1; i < item.length; i++) {
-                if (item[i] === '-') item[i] = 0;
+                if (item[i] === '-') {item[i] = 0}
+                else {item[i] = +item[i]};
             }
         })
 /*
@@ -211,10 +212,9 @@ for (let row of rawCharData.slice(1, -1)) {
 
         GetCharLists();                 // returns Char2 table, Char1 and Char2 lists, Table
         TableTotalRows = Char2List.length + (Char1List.length * 5);
-        CreateHTMLTable();
-
-        UpdateList();           // delete after UpdateList  works
-        DisplayTable();         // delete after UpdateList  works
+    
+        CreateHTMLTable();              // print our HINTS on Spelling Bee page
+        UpdateList();
         return;
     }
 
@@ -231,7 +231,7 @@ for (let row of rawCharData.slice(1, -1)) {
         while (temp[index] != '') {
             temp[index] = temp[index].toUpperCase();
             temp1.push(temp[index]);
-            temp1.push(temp[index + 1]);
+            temp1.push(+temp[index + 1]);
             index += 2;
             if (temp[index][0] != char) {
                 Char2Table.push(temp1);
@@ -247,7 +247,7 @@ for (let row of rawCharData.slice(1, -1)) {
             Table.push(Spacer);
             Table.push(Header);
             Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
-            Char1List[chTableIndx].char1 = Char1Table[chTableIndx][0][0].toUpperCase();
+            Char1List[chTableIndx].char1 = Char1Table[chTableIndx][0];
             Char1List[chTableIndx].rowStart = row;
             Char1List[chTableIndx].rowEnd = row + (Char2Table[chTableIndx].length / 2);
             Char1List[chTableIndx].total = Number(Char1Table[chTableIndx][Char1Table[chTableIndx].length - 1]);
@@ -412,7 +412,6 @@ for (let row of rawCharData.slice(1, -1)) {
     UpdateMetaStats();
     Char1List.forEach(item => {item.colSum(); item.rowSum();});
     DisplayTable();
-    DoneIsGray();
     return;
     }
 
@@ -427,43 +426,15 @@ for (let row of rawCharData.slice(1, -1)) {
         return outputList;
     }
 
-    // TO DO:  ONLY WORKS ON BOTTOM ROW OF EACH CHAR1 TABLE
-    function DoneIsGray () {    // grays out completed rows and columns
-        for (let i = 0; i < Char1List.length; i++) {
-            // check for completed rows
-            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
-                if (Table[j][1] === Table[j][2]) {
-                    RowColor(j, 0, ColEnd, "lightsteelblue")
-                }
-            }
-            // check for completed columns
-            for (let j = ColStart; j <= ColEnd; j++) {
-                if (Table[Char1List[i].rowStart][j] === Table[Char1List[i].rowEnd + 1][j]) {
-                    ColColor(j, Char1List[i].rowStart - 1, Char1List[i].rowEnd + 1,"lightsteelblue");
-                }
-            }
-        }
-    }
-
-    function Char2ToRow (word) {            // returns row of char2
-        return Char2List[Char2List.findIndex(item => item.char2 === word.slice(0, 2))].row;
-    }
-
-    function RowColor (row, colStart, colEnd, color) {
-        for (let col = colStart; col <= colEnd; col++) {
-            Cell[row][col].element.style.color = color;
-        }
-    }
-
-    function ColColor (col, rowStart, rowEnd, color) {
-        for (let row = rowStart; row <= rowEnd; row++) {
-            Cell[row][col].element.style.color = color;
-        }
-    }
-
     //======================================
     // GENERAL SUB-FUNCTIONS
     //======================================
+
+    function UpdateMetaStats () {
+        El.MetaStats2.innerHTML = Points + '<br>' + Pangrams + `<br>` + PangramsFound;
+        El.MetaStats4.innerHTML = GeniusScore + '<br>' + WordsTotal + `<br>` + WordsFound;
+        return;
+    }
 
     function DisplayTable () {
         for (let i = 0; i < TableTotalRows; i++) {
@@ -481,15 +452,44 @@ for (let row of rawCharData.slice(1, -1)) {
                 }
             }
         });
+        DoneIsGray();
         return;
     }
 
-    function UpdateMetaStats () {
-        El.MetaStats2.innerHTML = Points + '<br>' + Pangrams + `<br>` + PangramsFound;
-        El.MetaStats4.innerHTML = GeniusScore + '<br>' + WordsTotal + `<br>` + WordsFound;
-        return;
-    }
-
+        // TO DO:  ONLY WORKS ON BOTTOM ROW OF EACH CHAR1 TABLE
+        function DoneIsGray () {    // grays out completed rows and columns
+            for (let i = 0; i < Char1List.length; i++) {
+                // check for completed rows
+                for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
+                    if (Table[j][1] === Table[j][2]) {
+                        RowColor(j, 0, ColEnd, "lightsteelblue")
+                    }
+                }
+                // check for completed columns
+                for (let j = ColStart; j <= ColEnd; j++) {
+                    if (Table[Char1List[i].rowStart][j] === Table[Char1List[i].rowEnd + 1][j]) {
+                        ColColor(j, Char1List[i].rowStart - 1, Char1List[i].rowEnd + 1,"lightsteelblue");
+                    }
+                }
+            }
+        }
+    
+        function Char2ToRow (word) {            // returns row of char2
+            return Char2List[Char2List.findIndex(item => item.char2 === word.slice(0, 2))].row;
+        }
+    
+        function RowColor (row, colStart, colEnd, color) {
+            for (let col = colStart; col <= colEnd; col++) {
+                Cell[row][col].element.style.color = color;
+            }
+        }
+    
+        function ColColor (col, rowStart, rowEnd, color) {
+            for (let row = rowStart; row <= rowEnd; row++) {
+                Cell[row][col].element.style.color = color;
+            }
+        }
+    
 }       // end of main function  
 
 })();   // end of outer shell function
