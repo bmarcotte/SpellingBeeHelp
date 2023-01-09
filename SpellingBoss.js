@@ -14,7 +14,7 @@ async function main() {
     //--------------------------------------
 
     const HintsHTML = await getHints();     // data from Spelling Bee page
-    const GeniusScore = await getGeniusScore();
+    let GeniusScore = await getGeniusScore();
     const hintDiv = setUpHintDiv();         // initialize DOM
 
     const El = {
@@ -25,6 +25,7 @@ async function main() {
         Table: document.getElementById('table0'),
         WordList: document.querySelector('.sb-recent-words.sb-has-words'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
+        QueenBeePage: document.querySelector('.pz-moment__close'),
      }
 
     let Char1Obj = {            // Char1List obj
@@ -65,6 +66,7 @@ async function main() {
     let Char2List = [];
     let Char1Table = {};        // temporary raw data tables
     let Char2Table = [];
+    let Char2Row = [];          // translates Char2 to row
 
     let LineBreak = ['-', '-', '-', '-'];
     let Spacer = ['', '', '', '',];
@@ -81,7 +83,7 @@ async function main() {
     let WordsFound = 0;
     let Pangrams = 0;
     let PangramsFound = 0;
-    let Points = 0;
+    let TotalPoints = 0;
     let LetterList = "";        // needed to find pangrams
     let ProcessedWords = [];    // list of already tabulated words
 
@@ -99,6 +101,9 @@ async function main() {
 
     // Detect if bookmarklet starts from opening page
     El.OpeningPage.addEventListener('click', openingPage);
+
+    // Detect if already Queen Bee
+    El.QueenBeePage.addEventListener('click', queenBeePage);
 
 //======================================
 // GET DATA FROM SPELLING BEE PAGE
@@ -118,7 +123,12 @@ async function main() {
 
 async function openingPage () {
     setTimeout(resetStats, 500);
-return;
+    return;
+}
+
+async function queenBeePage() {
+    setTimeout(resetStats, 500);
+    return;
 }
 
 async function getHints() {
@@ -142,6 +152,14 @@ async function getHints() {
     document.querySelector('.sb-modal-close').click();
     return score;
   }
+  /* SEE ABOVE: SELECTS 8th ELEMENT
+    document.querySelector('[title="Click to see today’s ranks"]').click();
+    let modalList = await waitForElement('.sb-modal-list');
+    let ranks = modalList.querySelectorAll('li');
+    let geniusScore = ranks[8].innerText.replace(/\D/g, '');
+    document.querySelector('.sb-modal-close').click();
+    return geniusScore; 
+*/
 
   function waitForElement(selector) {
     return new Promise(resolveElement => {
@@ -168,16 +186,17 @@ async function getHints() {
     // -------------------------------------
     function InitializeHints () {
         let temp;
-        // Convert raw data to Chap1Table
+
+        // Convert raw data to Char1Table
         Char1Table = [...HintsHTML.querySelectorAll('table tr')]
             .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));
         temp = Char1Table[0].slice(1, -1).map(x => Number(x));
         for (let i = 0; i < temp.length; i++ ) WordLengths.push(temp[i]);
-        Char1Table.pop();           // eliminate first and last rows
+        Char1Table.pop();                               // eliminate first and last rows
         Char1Table.shift();
         Char1Table.forEach(item => {
             item[0] = item[0][0].toUpperCase();
-            for (let i = 1; i < item.length; i++) {
+            for (let i = 1; i < item.length; i++) {     // convert '-' to '0'
                 if (item[i] === '-') {item[i] = 0}
                 else {item[i] = +item[i]};
             }
@@ -186,6 +205,7 @@ async function getHints() {
 // Char1Table references above were raw data
 // This loop produces an object of clean data
 // This technique could be used to reference row from Char2
+
 for (let row of rawCharData.slice(1, -1)) {
     const letter = row[0][0].toUpperCase();
     let charCounts = [];
@@ -196,12 +216,13 @@ for (let row of rawCharData.slice(1, -1)) {
     Char1Table[letter] = charCounts;
 }
 */
+
         // MetaStats
         Paragraphs  = HintsHTML.querySelectorAll('p');
         LetterList = Paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
         temp = Paragraphs[2].textContent.split(/[^0-9]+/);
             WordsTotal = temp[1];
-            Points = temp[2];
+            TotalPoints = temp[2];
             Pangrams = temp[3];
                 if (temp[4] > 0) Pangrams = Pangrams + ' (' + temp[4] + ' Perfect)';
         UpdateMetaStats();
@@ -220,7 +241,6 @@ for (let row of rawCharData.slice(1, -1)) {
         }
 
         GetCharLists();                 // returns Char2 table, Char1 and Char2 lists, Table
-        TableTotalRows = Char2List.length + (Char1List.length * 5);
 
         CreateHTMLTable();              // print our HINTS on Spelling Bee page
         UpdateList();
@@ -228,7 +248,7 @@ for (let row of rawCharData.slice(1, -1)) {
     }
 
     function GetCharLists () {
-    // Create Char2Table
+    // Create Char2Table, then...
     // Simultaneously create Char1List, Char2List, and Table
 
         let temp = Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
@@ -262,7 +282,6 @@ for (let row of rawCharData.slice(1, -1)) {
             Char1List[chTableIndx].total = Number(Char1Table[chTableIndx][Char1Table[chTableIndx].length - 1]);
             temp = ['Letter', 'Σ', '#', 'Σ>'];
             temp.length = ColEnd + 1;
-            // temp.fill(0, 4, ColEnd + 1);
             for (let j = 4; j <=  ColEnd; j++) {         // Char1 stats line
                 temp[j] = Char1Table[chTableIndx][j - 3];
             }
@@ -275,19 +294,18 @@ for (let row of rawCharData.slice(1, -1)) {
                 j++;
                 Char2List[ch2Indx].count = Char2Table[chTableIndx][j];
                 temp = [Char2List[ch2Indx].char2, Char2List[ch2Indx].count, 0, ''];
-                // temp.length = ColEnd + 1;
-                // temp.fill(0, 4, ColEnd + 1);
                 Table.push(temp);
                 ch2Indx++;
                 row++;
             }
-            temp = ['Σ', Char1List[chTableIndx].total, 0, ''];
+            temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];
             temp.length = ColEnd + 1;
             temp.fill(0, 4, ColEnd + 1);
             Table.push(temp);
             row +=4;
             chTableIndx++;
         }
+        TableTotalRows = Char2List.length + (Char1List.length * 5);
         zeroOutCounts();
         return;
     }
@@ -345,9 +363,9 @@ for (let row of rawCharData.slice(1, -1)) {
         // Our added HTML
         hintDiv.innerHTML = `
         <table>
-            <td id="metastats1">Total points:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
+            <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
             <td id="metastats2"></td>
-            <td id="metastats3">Genius:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
+            <td id="metastats3">Genius:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
         </table>
         <table id="table0"></table><br>
@@ -355,20 +373,19 @@ for (let row of rawCharData.slice(1, -1)) {
         #metastats1 {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 90%;
-            width: 20ch;
+            width: 16ch;
             margin-left: 1ch;
             text-align: right;
         }
         #metastats2 {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 90%;
-            text-align: left;
-            width: 14ch;
+            text-align: right;
         }
         #metastats3 {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 90%;
-            width: 16ch;
+            width: 21ch;
             margin-left: 1ch;
             text-align: right;
         }
@@ -376,7 +393,8 @@ for (let row of rawCharData.slice(1, -1)) {
             font-family: Arial, Helvetica, sans-serif;
             margin-left: 1ch;
             font-size: 90%;
-            text-align: right;
+            text-align: left;
+            width: 14ch;
         }
         #table0 {
             margin-left: 3ch;
@@ -461,8 +479,11 @@ for (let row of rawCharData.slice(1, -1)) {
     //======================================
 
     function UpdateMetaStats () {
-        El.MetaStats2.innerHTML = Points + '<br>' + Pangrams + `<br>` + PangramsFound;
-        El.MetaStats4.innerHTML = GeniusScore + '<br>' + WordsTotal + `<br>` + WordsFound;
+        if (GeniusScore === TotalPoints) {
+            El.MetaStats3.innerHTML = 'QUEEN BEE:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp';
+        }
+        El.MetaStats2.innerHTML = TotalPoints + '<br>' + WordsTotal + `<br>` + WordsFound;
+        El.MetaStats4.innerHTML = GeniusScore + '<br>' + Pangrams + `<br>` + PangramsFound;
         return;
     }
 
@@ -486,39 +507,38 @@ for (let row of rawCharData.slice(1, -1)) {
         return;
     }
 
-        // TO DO:  ONLY WORKS ON BOTTOM ROW OF EACH CHAR1 TABLE
-        function DoneIsGray () {    // grays out completed rows and columns
-            for (let i = 0; i < Char1List.length; i++) {
-                // check for completed rows
-                for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
-                    if (Table[j][1] === Table[j][2]) {
-                        RowColor(j, 0, ColEnd, "lightsteelblue")
-                    }
+    function DoneIsGray () {    // grays out completed rows and columns
+        for (let i = 0; i < Char1List.length; i++) {
+            // check for completed rows
+            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
+                if (Table[j][1] === Table[j][2]) {
+                    RowColor(j, 0, ColEnd, "lightsteelblue")
                 }
-                // check for completed columns
-                for (let j = ColStart; j <= ColEnd; j++) {
-                    if (Table[Char1List[i].rowStart][j] === Table[Char1List[i].rowEnd + 1][j]) {
-                        ColColor(j, Char1List[i].rowStart - 1, Char1List[i].rowEnd + 1,"lightsteelblue");
-                    }
+            }
+            // check for completed columns
+            for (let j = ColStart; j <= ColEnd; j++) {
+                if (Table[Char1List[i].rowStart][j] === Table[Char1List[i].rowEnd + 1][j]) {
+                    ColColor(j, Char1List[i].rowStart - 1, Char1List[i].rowEnd + 1,"lightsteelblue");
                 }
             }
         }
+    }
 
-        function Char2ToRow (word) {            // returns row of char2
-            return Char2List[Char2List.findIndex(item => item.char2 === word.slice(0, 2))].row;
-        }
+    function Char2ToRow (word) {            // returns row of char2
+        return Char2List[Char2List.findIndex(item => item.char2 === word.slice(0, 2))].row;
+    }
 
-        function RowColor (row, colStart, colEnd, color) {
-            for (let col = colStart; col <= colEnd; col++) {
-                Cell[row][col].element.style.color = color;
-            }
+    function RowColor (row, colStart, colEnd, color) {
+        for (let col = colStart; col <= colEnd; col++) {
+            Cell[row][col].element.style.color = color;
         }
+    }
 
-        function ColColor (col, rowStart, rowEnd, color) {
-            for (let row = rowStart; row <= rowEnd; row++) {
-                Cell[row][col].element.style.color = color;
-            }
+    function ColColor (col, rowStart, rowEnd, color) {
+        for (let row = rowStart; row <= rowEnd; row++) {
+            Cell[row][col].element.style.color = color;
         }
+    }
 
 }       // end of main function
 
