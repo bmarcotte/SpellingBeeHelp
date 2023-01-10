@@ -62,24 +62,25 @@ async function main() {
         row: 0,                 // Table row
     };
     let Paragraphs;
+
+    // Pointers into Table
     let Char1List = [];         // holds index pointers into Table
     let Char2List = [];
-    let Char1Table = {};        // temporary raw data tables
-    let Char2Table = [];
-    let Char2Row = [];          // translates Char2 to row
+    let Char2Row = {};          // hash table: Char2 -> row
 
-    let LineBreak = ['-', '-', '-', '-'];
-    let Spacer = ['', '', '', '',];
-    let Header = ['', '', '', ''];
-    let Cell = [];              // holds element references for Table
-    let Table = [];             // holds display data
+    // Table data
+    let Table = [];             // display data
     const ColStart = 4;         // table dimensions
     let ColEnd = 0;
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
-    let WordLengths = [];        // word lengths, appended to Header
+    let LineBreak = ['-', '-', '-', '-'];
+    let Spacer = ['', '', '', '',];
+    let Header = ['', '', '', ''];
+    let Cell = [];              // element references for Table
 
-    let WordsTotal = 0;         // Metastats
+    // Metastats
+    let WordsTotal = 0;
     let WordsFound = 0;
     let Pangrams = 0;
     let PangramsFound = 0;
@@ -93,7 +94,7 @@ async function main() {
 
     InitializeHints ();
 
-    // Update tables on event - addition to Word List
+    // Detect addition to Word List
     const observer = new MutationObserver(() => {
         UpdateList();
     });
@@ -108,18 +109,6 @@ async function main() {
 //======================================
 // GET DATA FROM SPELLING BEE PAGE
 //======================================
-
-// const date = new Date(document.querySelector('.pz-game-date').textContent);
-// const hintsUrl = 'https://www.nytimes.com/' +
-//     date.toISOString().slice(0, 10).replaceAll('-', '/') +
-//     '/crosswords/spelling-bee-forum.html';
-
-// fetch(hintsUrl).then(response => response.text()).then(html => {
-//     const div = document.createElement('div');
-//     div.innerHTML = html;                                         // translates string to DOM
-//     const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
-//     main(hints);
-// });
 
 async function openingPage () {
     setTimeout(resetStats, 500);
@@ -152,15 +141,7 @@ async function getHints() {
     document.querySelector('.sb-modal-close').click();
     return score;
   }
-  /* SEE ABOVE: SELECTS 8th ELEMENT
-    document.querySelector('[title="Click to see today’s ranks"]').click();
-    let modalList = await waitForElement('.sb-modal-list');
-    let ranks = modalList.querySelectorAll('li');
-    let geniusScore = ranks[8].innerText.replace(/\D/g, '');
-    document.querySelector('.sb-modal-close').click();
-    return geniusScore; 
-*/
-
+  
   function waitForElement(selector) {
     return new Promise(resolveElement => {
 
@@ -186,36 +167,22 @@ async function getHints() {
     // -------------------------------------
     function InitializeHints () {
         let temp;
+        let wordLengths = [];       // word lengths, appended to Header
 
-        // Convert raw data to Char1Table
-        Char1Table = [...HintsHTML.querySelectorAll('table tr')]
-            .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));
-        temp = Char1Table[0].slice(1, -1).map(x => Number(x));
-        for (let i = 0; i < temp.length; i++ ) WordLengths.push(temp[i]);
-        Char1Table.pop();                               // eliminate first and last rows
-        Char1Table.shift();
-        Char1Table.forEach(item => {
+        // Convert raw data to char1Table
+        let char1Table = [...HintsHTML.querySelectorAll('table tr')]
+            .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));  // ... convert iterable to array
+        temp = char1Table[0].slice(1, -1).map(x => Number(x));
+        for (let i = 0; i < temp.length; i++ ) wordLengths.push(temp[i]);
+        char1Table.pop();                               // eliminate first and last rows
+        char1Table.shift();
+        char1Table.forEach(item => {
             item[0] = item[0][0].toUpperCase();
             for (let i = 1; i < item.length; i++) {     // convert '-' to '0'
                 if (item[i] === '-') {item[i] = 0}
                 else {item[i] = +item[i]};
             }
         })
-/*
-// Char1Table references above were raw data
-// This loop produces an object of clean data
-// This technique could be used to reference row from Char2
-
-for (let row of rawCharData.slice(1, -1)) {
-    const letter = row[0][0].toUpperCase();
-    let charCounts = [];
-    for (let i = 0; i < WordLengths.length; i++) {
-        const wordLength = WordLengths[i];
-        charCounts[wordLength] = Number(row[i + 1]) || 0;
-    }
-    Char1Table[letter] = charCounts;
-}
-*/
 
         // MetaStats
         Paragraphs  = HintsHTML.querySelectorAll('p');
@@ -228,33 +195,32 @@ for (let row of rawCharData.slice(1, -1)) {
         UpdateMetaStats();
 
         // Linebreak, Spacer, Header row templates
-        ColEnd = WordLengths.length + 3;
-        WordLengths.forEach(item => Header.push(item));
+        ColEnd = wordLengths.length + 3;
+        wordLengths.forEach(item => Header.push(item));
         LineBreak.length = ColEnd + 1;
         LineBreak.fill('-', 4, ColEnd + 1);
         Spacer.length = ColEnd + 1;
         Spacer.fill('', 4, ColEnd + 1);
-
-        // ColIndex accounts for empty columns
-        for (let i = 4; i < WordLengths.length + 4; i++) {
-            ColIndex[WordLengths[i - 4]] = i;
+        for (let i = 4; i < wordLengths.length + 4; i++) {  // ColIndex accounts for empty columns
+            ColIndex[wordLengths[i - 4]] = i;
         }
 
-        GetCharLists();                 // returns Char2 table, Char1 and Char2 lists, Table
+        // Char1List, Char2List, Char2Row, and Table
+        GetCharLists(char1Table);
+        Char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
 
         CreateHTMLTable();              // print our HINTS on Spelling Bee page
         UpdateList();
         return;
     }
 
-    function GetCharLists () {
-    // Create Char2Table, then...
+    function GetCharLists (char1Table) {
+    // Create temporary char2Table, then...
     // Simultaneously create Char1List, Char2List, and Table
 
+        let char2Table = [];                        // create temporary raw char2Table
         let temp = Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
-        // Char2Table = [...Paragraphs[4].querySelectorAll('span')].map(x => x.textContent);    // ?????
-
-        let char = temp[1][0];                        // create Char2Table
+        let char = temp[1][0];
         let index = 1;
         let temp1 = [];
         while (temp[index] != '') {
@@ -263,36 +229,36 @@ for (let row of rawCharData.slice(1, -1)) {
             temp1.push(+temp[index + 1]);
             index += 2;
             if (temp[index][0] != char) {
-                Char2Table.push(temp1);
+                char2Table.push(temp1);
                 char = temp[index][0];
                 temp1 = [];
             }
         }
         let ch2Indx = 0;                            // iterates through Char2List
-        let chTableIndx = 0;                        // iterates through Char1List and Char1Table/Char2Table
+        let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
         let row = 3;
-        for (let i = 0; i < Char1Table.length; i++) {     // iterate over each Char1Table row
+        for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
             Table.push(LineBreak);
             Table.push(Spacer);
             Table.push(Header);
             Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
-            Char1List[chTableIndx].char1 = Char1Table[chTableIndx][0];
+            Char1List[chTableIndx].char1 = char1Table[chTableIndx][0];
             Char1List[chTableIndx].rowStart = row;
-            Char1List[chTableIndx].rowEnd = row + (Char2Table[chTableIndx].length / 2);
-            Char1List[chTableIndx].total = Number(Char1Table[chTableIndx][Char1Table[chTableIndx].length - 1]);
+            Char1List[chTableIndx].rowEnd = row + (char2Table[chTableIndx].length / 2);
+            Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
             temp = ['Letter', 'Σ', '#', 'Σ>'];
             temp.length = ColEnd + 1;
             for (let j = 4; j <=  ColEnd; j++) {         // Char1 stats line
-                temp[j] = Char1Table[chTableIndx][j - 3];
+                temp[j] = char1Table[chTableIndx][j - 3];
             }
             Table.push(temp);
             row++;
-            for (let j = 0; j < Char2Table[chTableIndx].length; j++) {  // Char2 lines
+            for (let j = 0; j < char2Table[chTableIndx].length; j++) {  // Char2 lines
                 Char2List[ch2Indx] = Object.assign({}, Char2Obj);
                 Char2List[ch2Indx].row = row;
-                Char2List[ch2Indx].char2 = Char2Table[chTableIndx][j];
+                Char2List[ch2Indx].char2 = char2Table[chTableIndx][j];
                 j++;
-                Char2List[ch2Indx].count = Char2Table[chTableIndx][j];
+                Char2List[ch2Indx].count = char2Table[chTableIndx][j];
                 temp = [Char2List[ch2Indx].char2, Char2List[ch2Indx].count, 0, ''];
                 Table.push(temp);
                 ch2Indx++;
@@ -300,7 +266,7 @@ for (let row of rawCharData.slice(1, -1)) {
             }
             temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];
             temp.length = ColEnd + 1;
-            temp.fill(0, 4, ColEnd + 1);
+            // temp.fill(0, 4, ColEnd + 1);
             Table.push(temp);
             row +=4;
             chTableIndx++;
@@ -360,58 +326,54 @@ for (let row of rawCharData.slice(1, -1)) {
         hintDiv.style.padding = '12px';
         container.append(hintDiv);
 
-        // Our added HTML
+        // Added HTML: inserted hints
         hintDiv.innerHTML = `
         <table>
             <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
             <td id="metastats2"></td>
             <td id="metastats3">Genius:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
-        </table>
-        <table id="table0"></table><br>
+        </table><table id="table0"></table><br>
         <style>
-        #metastats1 {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 90%;
-            width: 16ch;
-            margin-left: 1ch;
-            text-align: right;
-        }
-        #metastats2 {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 90%;
-            text-align: right;
-        }
-        #metastats3 {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 90%;
-            width: 21ch;
-            margin-left: 1ch;
-            text-align: right;
-        }
-        #metastats4 {
-            font-family: Arial, Helvetica, sans-serif;
-            margin-left: 1ch;
-            font-size: 90%;
-            text-align: left;
-            width: 14ch;
-        }
-        #table0 {
-            margin-left: 3ch;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: medium;
-        }
+            #metastats1 {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 90%;
+                width: 16ch;
+                margin-left: 1ch;
+                text-align: right;
+            }
+            #metastats2 {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 90%;
+                text-align: right;
+            }
+            #metastats3 {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 90%;
+                width: 21ch;
+                margin-left: 1ch;
+                text-align: right;
+            }
+            #metastats4 {
+                font-family: Arial, Helvetica, sans-serif;
+                margin-left: 1ch;
+                font-size: 90%;
+                text-align: left;
+                width: 14ch;
+            }
+            #table0 {
+                margin-left: 3ch;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: medium;
+            }
 
-        #table0 td {
-            height: 1ch;
-            width: 3ch;
-            margin-left: 5ch;
-            margin-right: 5ch;
-            text-align: center;
-        }
-        .separator {
-            border-bottom: 1px solid black;
-        }
+            #table0 td {
+                height: 1ch;
+                width: 3ch;
+                margin-left: 5ch;
+                margin-right: 5ch;
+                text-align: center;
+            }
         </style>
         `;
         return hintDiv;
@@ -424,23 +386,23 @@ for (let row of rawCharData.slice(1, -1)) {
     // -------------------------------------
     function UpdateList () {
     // -------------------------------------
-    let ProcessList = CullList(El.WordList.innerText.toUpperCase().split('\n'));
-    for (let i = 0; i < ProcessList.length; i++) {      // Tally input words
-        Table[Char2ToRow(ProcessList[i])][ColIndex[ProcessList[i].length]]++;
-        WordsFound++;
-        let pangram = true;                             // check for Pangram
-        for (let j = 0; j < LetterList.length; j++) {
-            if (!ProcessList[i].includes(LetterList[j])) {
-                pangram = false;
-                break;
+        let ProcessList = CullList(El.WordList.innerText.toUpperCase().split('\n'));
+        for (let i = 0; i < ProcessList.length; i++) {      // Tally input words
+            Table[Char2Row[(ProcessList[i].slice(0, 2))]][ColIndex[ProcessList[i].length]]++;
+            WordsFound++;
+            let pangram = true;                             // check for Pangram
+            for (let j = 0; j < LetterList.length; j++) {
+                if (!ProcessList[i].includes(LetterList[j])) {
+                    pangram = false;
+                    break;
+                }
             }
+            if (pangram) PangramsFound++;
         }
-        if (pangram) PangramsFound++;
-    }
-    UpdateMetaStats();
-    Char1List.forEach(item => {item.colSum(); item.rowSum();});
-    DisplayTable();
-    return;
+        Char1List.forEach(item => {item.colSum(); item.rowSum();}); // summate columns and rows
+        UpdateMetaStats();
+        DisplayTable();
+        return;
     }
 
     function CullList(inputList) {       // returns list of unprocessed words
@@ -454,7 +416,7 @@ for (let row of rawCharData.slice(1, -1)) {
         return outputList;
     }
 
-    function resetStats() {    // needed if program is installed on opening SB page
+    function resetStats() {    // needed if program is installed on Opening or Queen Bee page
         ProcessedWords = [];
         WordsFound = 0;
         PangramsFound = 0;
@@ -475,7 +437,7 @@ for (let row of rawCharData.slice(1, -1)) {
     }
 
     //======================================
-    // GENERAL SUB-FUNCTIONS
+    // DISPLAY FUNCTIONS
     //======================================
 
     function UpdateMetaStats () {
@@ -488,12 +450,14 @@ for (let row of rawCharData.slice(1, -1)) {
     }
 
     function DisplayTable () {
+        // Map Table to HTML
         for (let i = 0; i < TableTotalRows; i++) {
             for (let j = 0; j <= ColEnd; j++) {
                 Cell[i][j].element.innerHTML = Table[i][j];
             }
         }
-        // code below displays helpful "0"s by filtering out unhelpful "0"s into "".
+
+        // Display helpful "0"s by filtering out unhelpful "0"s into "".
         Char1List.forEach(item => {
             for (let col = ColStart; col <= ColEnd; col ++) {
                 if (Table[item.rowStart][col] == 0) {
@@ -503,44 +467,47 @@ for (let row of rawCharData.slice(1, -1)) {
                 }
             }
         });
-        DoneIsGray();
-        return;
-    }
 
-    function DoneIsGray () {    // grays out completed rows and columns
-        for (let i = 0; i < Char1List.length; i++) {
+        // Gray out completed rows and columns
+        Char1List.forEach(item => {
             // check for completed rows
-            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
-                if (Table[j][1] === Table[j][2]) {
-                    RowColor(j, 0, ColEnd, "lightsteelblue")
+            for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
+                if (Table[row][1] === Table[row][2]) {
+                    for (let col =0; col <= ColEnd; col++) {
+                        Cell[row][col].element.style.color = "lightsteelblue";
+                    }
                 }
             }
             // check for completed columns
-            for (let j = ColStart; j <= ColEnd; j++) {
-                if (Table[Char1List[i].rowStart][j] === Table[Char1List[i].rowEnd + 1][j]) {
-                    ColColor(j, Char1List[i].rowStart - 1, Char1List[i].rowEnd + 1,"lightsteelblue");
+            for (let col = ColStart; col <= ColEnd; col++) {
+                if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
+                    for (let row = item.rowStart; row <= item.rowEnd; row++) {
+                        Cell[row][col].element.style.color = "lightsteelblue";
+                    }
                 }
             }
-        }
-    }
+        });
 
-    function Char2ToRow (word) {            // returns row of char2
-        return Char2List[Char2List.findIndex(item => item.char2 === word.slice(0, 2))].row;
-    }
-
-    function RowColor (row, colStart, colEnd, color) {
-        for (let col = colStart; col <= colEnd; col++) {
-            Cell[row][col].element.style.color = color;
-        }
-    }
-
-    function ColColor (col, rowStart, rowEnd, color) {
-        for (let row = rowStart; row <= rowEnd; row++) {
-            Cell[row][col].element.style.color = color;
-        }
+        return;
     }
 
 }       // end of main function
-
 })();   // end of outer shell function
 
+/* ==========================================================================
+    SEE getGeniusScore: SELECTS 8th ELEMENT
+    document.querySelector('[title="Click to see today’s ranks"]').click();
+    let modalList = await waitForElement('.sb-modal-list');
+    let ranks = modalList.querySelectorAll('li');
+    let geniusScore = ranks[8].innerText.replace(/\D/g, '');
+    document.querySelector('.sb-modal-close').click();
+    return geniusScore; 
+
+    ALTERNATIVE OPENING FOR FETCHING HINTS PAGE
+    fetch(hintsUrl).then(response => response.text()).then(html => {
+        const div = document.createElement('div');
+        div.innerHTML = html;                                         // translates string to DOM
+        const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
+        main(hints);
+    });
+=============================================================================*/
