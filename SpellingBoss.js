@@ -61,7 +61,6 @@ async function main() {
         count: 0,               // count of each Char2
         row: 0,                 // Table row
     };
-    // let Paragraphs;
 
     // Pointers into Table
     let Char1List = [];         // holds index pointers into Table
@@ -220,7 +219,6 @@ async function getHints() {
 
         let temp;
         let char2Table = [];                        // create temporary raw char2Table
-        // let temp = Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
         let char = char2Raw[1][0];
         let index = 1;
         let temp1 = [];
