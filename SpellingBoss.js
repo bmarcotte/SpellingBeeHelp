@@ -61,7 +61,7 @@ async function main() {
         count: 0,               // count of each Char2
         row: 0,                 // Table row
     };
-    let Paragraphs;
+    // let Paragraphs;
 
     // Pointers into Table
     let Char1List = [];         // holds index pointers into Table
@@ -185,7 +185,7 @@ async function getHints() {
         })
 
         // MetaStats
-        Paragraphs  = HintsHTML.querySelectorAll('p');
+        const Paragraphs  = HintsHTML.querySelectorAll('p');
         LetterList = Paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
         temp = Paragraphs[2].textContent.split(/[^0-9]+/);
             WordsTotal = temp[1];
@@ -206,7 +206,7 @@ async function getHints() {
         }
 
         // Char1List, Char2List, Char2Row, and Table
-        GetCharLists(char1Table);
+        GetCharLists(char1Table, Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/));
         Char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
 
         CreateHTMLTable();              // print our HINTS on Spelling Bee page
@@ -214,23 +214,24 @@ async function getHints() {
         return;
     }
 
-    function GetCharLists (char1Table) {
+    function GetCharLists (char1Table, char2Raw) {
     // Create temporary char2Table, then...
     // Simultaneously create Char1List, Char2List, and Table
 
+        let temp;
         let char2Table = [];                        // create temporary raw char2Table
-        let temp = Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
-        let char = temp[1][0];
+        // let temp = Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
+        let char = char2Raw[1][0];
         let index = 1;
         let temp1 = [];
-        while (temp[index] != '') {
-            temp[index] = temp[index].toUpperCase();
-            temp1.push(temp[index]);
-            temp1.push(+temp[index + 1]);
+        while (char2Raw[index] != '') {
+            char2Raw[index] = char2Raw[index].toUpperCase();
+            temp1.push(char2Raw[index]);
+            temp1.push(+char2Raw[index + 1]);
             index += 2;
-            if (temp[index][0] != char) {
+            if (char2Raw[index][0] != char) {
                 char2Table.push(temp1);
-                char = temp[index][0];
+                char = char2Raw[index][0];
                 temp1 = [];
             }
         }
