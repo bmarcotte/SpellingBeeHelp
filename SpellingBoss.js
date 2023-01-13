@@ -28,14 +28,15 @@ async function main() {
         QueenBeePage: document.querySelector('.pz-moment__close'),
      }
 
+    // Table data
     let Char1Obj = {            // Char1List obj
         char1: '',
         rowStart: 0,            // letter subtotals row in Table
         rowEnd: 0,              // last data row in Table, not col totals
         count: [],              // word length subtotals
         total: 0,               // total number of words
-        colSum() {
-            for (let j = ColStart - 2; j <= ColEnd; j++) {
+        sums() {
+            for (let j = ColStart - 2; j <= ColEnd; j++) {  // summate columns
                 if (j == ColStart - 1) continue;
                 let sum = 0;
                 for (let i = this.rowStart + 1; i <= this.rowEnd; i++) {
@@ -43,17 +44,13 @@ async function main() {
                 }
                 Table[this.rowEnd + 1][j] = sum;
             }
-            return;
-            },
-        rowSum() {
-            for (let i = this.rowStart + 1; i <= this.rowEnd + 1; i++) {
+            for (let i = this.rowStart + 1; i <= this.rowEnd + 1; i++) {    //summate rows
                 let sum = 0;
                 for (let j = ColStart; j <= ColEnd; j++) {
                     sum += Table[i][j];
                 }
                 Table[i][2] = sum;
             }
-            return;
         },
     };
     let Char2Obj = {            // Char2List obj
@@ -61,22 +58,15 @@ async function main() {
         count: 0,               // count of each Char2
         row: 0,                 // Table row
     };
-
-    // Pointers into Table
-    let Char1List = [];         // holds index pointers into Table
-    let Char2List = [];
-    let Char2Row = {};          // hash table: Char2 -> row
-
-    // Table data
-    let Table = [];             // display data
-    const ColStart = 4;         // table dimensions
+    let Table = [];             // Main Table array
+    let Cell = [];              // element references for Table
+    const ColStart = 4;         // table data
     let ColEnd = 0;
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
-    let LineBreak = ['-', '-', '-', '-'];
-    let Spacer = ['', '', '', '',];
-    let Header = ['', '', '', ''];
-    let Cell = [];              // element references for Table
+    let Char1List = [];         // Pointers into Table
+    let Char2List = [];
+    let Char2Row = {};          // hash table: Char2 -> row
 
     // Metastats
     let WordsTotal = 0;
@@ -84,6 +74,8 @@ async function main() {
     let Pangrams = 0;
     let PangramsFound = 0;
     let TotalPoints = 0;
+    
+    // Words data
     let LetterList = "";        // needed to find pangrams
     let ProcessedWords = [];    // list of already tabulated words
 
@@ -91,227 +83,74 @@ async function main() {
     // MAIN PROGRAM
     // -------------------------------------
 
+    /* ----- Insert our HTML and data into Spelling Bee ----- */
     InitializeHints ();
 
-    // Detect addition to Word List
+    /* ----- Detect addition to Word List ----- */
+    //       main activity during game play
     const observer = new MutationObserver(() => {
         UpdateList();
     });
     observer.observe(El.WordList, {childList: true});
 
-    // Detect if bookmarklet starts from opening page
+    /* ----- Detect if bookmarklet starts from opening page ----- */
     El.OpeningPage.addEventListener('click', openingPage);
 
-    // Detect if already Queen Bee
+    /* ----- Detect if already Queen Bee on start up ----- */
     El.QueenBeePage.addEventListener('click', queenBeePage);
 
 //======================================
 // GET DATA FROM SPELLING BEE PAGE
 //======================================
 
-async function openingPage () {
-    setTimeout(resetStats, 500);
-    return;
-}
+    async function getHints() {
+        const date = new Date(document.querySelector('.pz-game-date').textContent);
+        const hintsUrl = 'https://www.nytimes.com/' +
+            date.toISOString().slice(0, 10).replaceAll('-', '/') +
+            '/crosswords/spelling-bee-forum.html';
 
-async function queenBeePage() {
-    setTimeout(resetStats, 500);
-    return;
-}
+        const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
+            const div = document.createElement('div');
+            div.innerHTML = html;                                       // translates string to DOM
+            return div.querySelector('.interactive-body > div');        // . = css selector; # = id selector
+        });
+        return hints;
+    }
 
-async function getHints() {
-    const date = new Date(document.querySelector('.pz-game-date').textContent);
-    const hintsUrl = 'https://www.nytimes.com/' +
-        date.toISOString().slice(0, 10).replaceAll('-', '/') +
-        '/crosswords/spelling-bee-forum.html';
+    async function getGeniusScore() {
+        document.querySelector('[title="Click to see today’s ranks"]').click();
+        let element = await waitForElement('.sb-modal-list li:last-of-type');
+        let score = element.innerText.replace(/\D/g, '');
+        document.querySelector('.sb-modal-close').click();
+        return score;
+    }
 
-    const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
-        const div = document.createElement('div');
-        div.innerHTML = html;                                       // translates string to DOM
-        return div.querySelector('.interactive-body > div');        // . = css selector; # = id selector
-    });
-    return hints;
-  }
-
-  async function getGeniusScore() {
-    document.querySelector('[title="Click to see today’s ranks"]').click();
-    let element = await waitForElement('.sb-modal-list li:last-of-type');
-    let score = element.innerText.replace(/\D/g, '');
-    document.querySelector('.sb-modal-close').click();
-    return score;
-  }
-  
-  function waitForElement(selector) {
-    return new Promise(resolveElement => {
-
-      const checkForElement = () => {
-        let element = document.querySelector(selector);
-        if (element) {
-          resolveElement(element);
-        } else {
-          setTimeout(checkForElement, 10);
-        }
-      };
-
-      checkForElement();
-    });
-  }
-
-//======================================
-// MAIN SUPPORTING FUNCTION: INITIALIZE HINTS
-//======================================
-
-    // -------------------------------------
-    // Read HINTS page and generate all tables
-    // -------------------------------------
-    function InitializeHints () {
-        let temp;
-        let wordLengths = [];       // word lengths, appended to Header
-
-        // Convert raw data to char1Table
-        let char1Table = [...HintsHTML.querySelectorAll('table tr')]
-            .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));  // ... convert iterable to array
-        temp = char1Table[0].slice(1, -1).map(x => Number(x));
-        for (let i = 0; i < temp.length; i++ ) wordLengths.push(temp[i]);
-        char1Table.pop();                               // eliminate first and last rows
-        char1Table.shift();
-        char1Table.forEach(item => {
-            item[0] = item[0][0].toUpperCase();
-            for (let i = 1; i < item.length; i++) {     // convert '-' to '0'
-                if (item[i] === '-') {item[i] = 0}
-                else {item[i] = +item[i]};
+    function waitForElement(selector) {
+        return new Promise(resolveElement => {
+            const checkForElement = () => {
+            let element = document.querySelector(selector);
+            if (element) {
+                resolveElement(element);
+            } else {
+                setTimeout(checkForElement, 10);
             }
-        })
+            };
 
-        // MetaStats
-        const Paragraphs  = HintsHTML.querySelectorAll('p');
-        LetterList = Paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
-        temp = Paragraphs[2].textContent.split(/[^0-9]+/);
-            WordsTotal = temp[1];
-            TotalPoints = temp[2];
-            Pangrams = temp[3];
-                if (temp[4] > 0) Pangrams = Pangrams + ' (' + temp[4] + ' Perfect)';
-        UpdateMetaStats();
+            checkForElement();
+        });
+    }
 
-        // Linebreak, Spacer, Header row templates
-        ColEnd = wordLengths.length + 3;
-        wordLengths.forEach(item => Header.push(item));
-        LineBreak.length = ColEnd + 1;
-        LineBreak.fill('-', 4, ColEnd + 1);
-        Spacer.length = ColEnd + 1;
-        Spacer.fill('', 4, ColEnd + 1);
-        for (let i = 4; i < wordLengths.length + 4; i++) {  // ColIndex accounts for empty columns
-            ColIndex[wordLengths[i - 4]] = i;
-        }
-
-        // Char1List, Char2List, Char2Row, and Table
-        GetCharLists(char1Table, Paragraphs[4].textContent.split(/[^A-Za-z0-9]+/));
-        Char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
-
-        CreateHTMLTable();              // print our HINTS on Spelling Bee page
-        UpdateList();
+    async function openingPage () {
+        setTimeout(resetStats, 500);
         return;
     }
 
-    function GetCharLists (char1Table, char2Raw) {
-    // Create temporary char2Table, then...
-    // Simultaneously create Char1List, Char2List, and Table
-
-        let temp;
-        let char2Table = [];                        // create temporary raw char2Table
-        let char = char2Raw[1][0];
-        let index = 1;
-        let temp1 = [];
-        while (char2Raw[index] != '') {
-            char2Raw[index] = char2Raw[index].toUpperCase();
-            temp1.push(char2Raw[index]);
-            temp1.push(+char2Raw[index + 1]);
-            index += 2;
-            if (char2Raw[index][0] != char) {
-                char2Table.push(temp1);
-                char = char2Raw[index][0];
-                temp1 = [];
-            }
-        }
-        let ch2Indx = 0;                            // iterates through Char2List
-        let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
-        let row = 3;
-        for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
-            Table.push(LineBreak);
-            Table.push(Spacer);
-            Table.push(Header);
-            Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
-            Char1List[chTableIndx].char1 = char1Table[chTableIndx][0];
-            Char1List[chTableIndx].rowStart = row;
-            Char1List[chTableIndx].rowEnd = row + (char2Table[chTableIndx].length / 2);
-            Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
-            temp = ['Letter', 'Σ', '#', 'Σ>'];
-            temp.length = ColEnd + 1;
-            for (let j = 4; j <=  ColEnd; j++) {         // Char1 stats line
-                temp[j] = char1Table[chTableIndx][j - 3];
-            }
-            Table.push(temp);
-            row++;
-            for (let j = 0; j < char2Table[chTableIndx].length; j++) {  // Char2 lines
-                Char2List[ch2Indx] = Object.assign({}, Char2Obj);
-                Char2List[ch2Indx].row = row;
-                Char2List[ch2Indx].char2 = char2Table[chTableIndx][j];
-                j++;
-                Char2List[ch2Indx].count = char2Table[chTableIndx][j];
-                temp = [Char2List[ch2Indx].char2, Char2List[ch2Indx].count, 0, ''];
-                Table.push(temp);
-                ch2Indx++;
-                row++;
-            }
-            temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];
-            temp.length = ColEnd + 1;
-            // temp.fill(0, 4, ColEnd + 1);
-            Table.push(temp);
-            row +=4;
-            chTableIndx++;
-        }
-        TableTotalRows = Char2List.length + (Char1List.length * 5);
-        zeroOutCounts();
+    async function queenBeePage() {
+        setTimeout(resetStats, 500);
         return;
     }
 
-    function CreateHTMLTable() {
-        for (let y = 0; y < TableTotalRows; y++) {
-            let rowObj = [];
-            let rowEl = document.createElement('tr');
-            for (let x = 0; x <= ColEnd; x++) {
-                let cellEl = document.createElement('td');
-                rowObj.push({element: cellEl});
-                rowEl.appendChild(cellEl);
-            }
-            Cell.push(rowObj);
-            El.Table.appendChild(rowEl);
-        }
-        for (let i = 0; i < Char1List.length; i++) {    // cell colors
-            for (let j = ColStart; j <= ColEnd; j++) {
-                let row = Char1List[i].rowStart;
-                Cell[row][j].element.style.color = 'mediumvioletred';
-                Cell[row][j].element.style.fontWeight = 'bold';
-            }
-            for (let j = ColStart; j <= ColEnd; j++) {
-                Cell[Char1List[i].rowEnd + 1][j].element.style.fontWeight = 'bold';
-            }
-            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
-                Cell[j][1].element.style.color = 'mediumvioletred';
-                Cell[j][1].element.style.fontWeight = 'bold';
-                Cell[j][2].element.style.fontWeight = 'bold';
-            }
-            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd; j++) {
-                for (let k = ColStart; k <= ColEnd; k++) {
-                    Cell[j][k].element.style.backgroundColor = "whitesmoke";
-                }
-            }
-        }
-        return;
-    }
-    // -------------------------------------
-    // Create DOM for our added HTML
-    // -------------------------------------
+    /* ----- Create DOM for our added HTML ----- */
     function setUpHintDiv() {
         const gameScreen = document.querySelector('.pz-game-screen');
         const parent = gameScreen.parentElement;
@@ -325,7 +164,7 @@ async function getHints() {
         hintDiv.style.padding = '12px';
         container.append(hintDiv);
 
-        // Added HTML: inserted hints
+        // Our added HTML
         hintDiv.innerHTML = `
         <table>
             <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
@@ -379,40 +218,193 @@ async function getHints() {
     }
 
 //======================================
+// MAIN SUPPORTING FUNCTION: INITIALIZE HINTS
+//======================================
+
+    // -------------------------------------
+    // Read HINTS page and generate all tablesHeader
+    // -------------------------------------
+    function InitializeHints () {
+        let temp;
+        let wordLengths = [];       // word lengths, appended to header
+        const paragraphs  = HintsHTML.querySelectorAll('p');
+
+        // MetaStats
+        LetterList = paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
+        temp = paragraphs[2].textContent.split(/[^0-9]+/);
+            WordsTotal = +temp[1];
+            TotalPoints = +temp[2];
+            Pangrams = +temp[3];
+                if (temp[4] > 0) Pangrams = Pangrams + ' (' + temp[4] + ' Perfect)';
+
+         // char1Table (temporary data)
+        let char1Table = [...HintsHTML.querySelectorAll('table tr')]
+            .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));  // ... convert iterable to array
+        temp = char1Table[0].slice(1, -1).map(x => Number(x));
+        for (let i = 0; i < temp.length; i++ ) wordLengths.push(temp[i]);
+        char1Table.pop();                               // eliminate first and last rows
+        char1Table.shift();
+        char1Table.forEach(item => {
+            item[0] = item[0][0].toUpperCase();
+            for (let i = 1; i < item.length; i++) {     // convert '-' to '0'
+                if (item[i] === '-') {item[i] = 0}
+                else {item[i] = +item[i]};
+            }
+        })
+
+        // char2Table (temporary data)
+        let char2Table = [];                        // char2Table (temporary data)
+        let char2Raw = paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
+        debugger;
+        let index = 1;
+        let temp1 = [];
+        let char = char2Raw[index][0];
+        while (char2Raw[index] != '') {
+            char2Raw[index] = char2Raw[index].toUpperCase();
+            temp1.push(char2Raw[index]);
+            temp1.push(+char2Raw[index + 1]);
+            index += 2;
+            if (char2Raw[index][0] != char) {
+                char2Table.push(temp1);
+                char = char2Raw[index][0];
+                temp1 = [];
+            }
+        }
+
+        // Header, LineBreak, Spacer row templates
+        ColEnd = wordLengths.length + 3;
+        let header = ['', '', '', ''];
+        wordLengths.forEach(item => header.push(item));
+        let lineBreak = ['-', '-', '-', '-'];
+        lineBreak.length = ColEnd + 1;
+        lineBreak.fill('-', 4, ColEnd + 1);
+        let spacer = ['', '', '', '',];
+        spacer.length = ColEnd + 1;
+        spacer.fill('', 4, ColEnd + 1);
+        for (let i = 4; i < wordLengths.length + 4; i++) {  // ColIndex accounts for empty columns
+            ColIndex[wordLengths[i - 4]] = i;
+        }
+
+       // Char1List, Char2List, Char2Row, and Table (permanent data)
+        GetCharLists(char1Table, char2Table, header, lineBreak, spacer);
+
+        CreateHTMLTable();              // print our HINTS on Spelling Bee page
+        UpdateList();
+        return;
+    }
+
+    function GetCharLists (char1Table, char2Table, header, lineBreak, spacer) {
+    // Create Char1List, Char2List, Char2Row, and Table
+
+        let temp;
+        let ch2Indx = 0;                            // iterates through Char2List
+        let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
+        let row = 3;
+        for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
+            Table.push(lineBreak);
+            Table.push(spacer);
+            Table.push(header);
+            Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
+            Char1List[chTableIndx].char1 = char1Table[chTableIndx][0];
+            Char1List[chTableIndx].rowStart = row;
+            Char1List[chTableIndx].rowEnd = row + (char2Table[chTableIndx].length / 2);
+            Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
+            temp = ['Letter', 'Σ', '#', 'Σ>'];
+            temp.length = ColEnd + 1;
+            for (let j = 4; j <=  ColEnd; j++) {                    // Char1 stats line
+                temp[j] = char1Table[chTableIndx][j - 3];
+            }
+            Table.push(temp);
+            row++;
+            for (let j = 0; j < char2Table[chTableIndx].length; j++) {  // Char2 lines
+                Char2List[ch2Indx] = Object.assign({}, Char2Obj);
+                Char2List[ch2Indx].row = row;
+                Char2List[ch2Indx].char2 = char2Table[chTableIndx][j];
+                j++;
+                Char2List[ch2Indx].count = char2Table[chTableIndx][j];
+                temp = [Char2List[ch2Indx].char2, Char2List[ch2Indx].count, 0, ''];
+                Table.push(temp);
+                ch2Indx++;
+                row++;
+            }
+            temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];
+            temp.length = ColEnd + 1;
+            Table.push(temp);
+            row +=4;
+            chTableIndx++;
+        }
+        Char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
+        TableTotalRows = Char2List.length + (Char1List.length * 5);
+        zeroOutCounts();
+        return;
+    }
+
+    function CreateHTMLTable() {
+        for (let y = 0; y < TableTotalRows; y++) {
+            let rowObj = [];
+            let rowEl = document.createElement('tr');
+            for (let x = 0; x <= ColEnd; x++) {
+                let cellEl = document.createElement('td');
+                rowObj.push({element: cellEl});
+                rowEl.appendChild(cellEl);
+            }
+            Cell.push(rowObj);
+            El.Table.appendChild(rowEl);
+        }
+        for (let i = 0; i < Char1List.length; i++) {    // cell colors
+            for (let j = ColStart; j <= ColEnd; j++) {
+                let row = Char1List[i].rowStart;
+                Cell[row][j].element.style.color = 'mediumvioletred';
+                Cell[row][j].element.style.fontWeight = 'bold';
+            }
+            for (let j = ColStart; j <= ColEnd; j++) {
+                Cell[Char1List[i].rowEnd + 1][j].element.style.fontWeight = 'bold';
+            }
+            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
+                Cell[j][1].element.style.color = 'mediumvioletred';
+                Cell[j][1].element.style.fontWeight = 'bold';
+                Cell[j][2].element.style.fontWeight = 'bold';
+            }
+            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd; j++) {
+                for (let k = ColStart; k <= ColEnd; k++) {
+                    Cell[j][k].element.style.backgroundColor = "whitesmoke";
+                }
+            }
+        }
+        return;
+    }
+ //======================================
 // MAIN SUPPORTING FUNCTION:  UPDATE TABLES FROM FOUND WORDS
 //======================================
 
     // -------------------------------------
     function UpdateList () {
     // -------------------------------------
-        let ProcessList = CullList(El.WordList.innerText.toUpperCase().split('\n'));
-        for (let i = 0; i < ProcessList.length; i++) {      // Tally input words
-            Table[Char2Row[(ProcessList[i].slice(0, 2))]][ColIndex[ProcessList[i].length]]++;
+        let processList = [];                              // Culled list of new words added to WordList
+        const inputList = El.WordList.innerText.toUpperCase().split('\n');
+        for (let i = 0; i < inputList.length; i++) {
+            if (!ProcessedWords.includes(inputList[i])) {
+                ProcessedWords.push(inputList[i]);
+                processList.push(inputList[i]);
+            }
+        }
+
+        for (let i = 0; i < processList.length; i++) {     // Tally input words
+            Table[Char2Row[(processList[i].slice(0, 2))]][ColIndex[processList[i].length]]++;
             WordsFound++;
-            let pangram = true;                             // check for Pangram
+            let pangram = true;                            // check for Pangram
             for (let j = 0; j < LetterList.length; j++) {
-                if (!ProcessList[i].includes(LetterList[j])) {
+                if (!processList[i].includes(LetterList[j])) {
                     pangram = false;
                     break;
                 }
             }
             if (pangram) PangramsFound++;
         }
-        Char1List.forEach(item => {item.colSum(); item.rowSum();}); // summate columns and rows
-        UpdateMetaStats();
+        Char1List.forEach(item => {item.sums()});             // summate columns and rows
+        DisplayMetaStats();
         DisplayTable();
         return;
-    }
-
-    function CullList(inputList) {       // returns list of unprocessed words
-        let outputList = [];
-        for (let i = 0; i < inputList.length; i++) {
-            if (!ProcessedWords.includes(inputList[i])) {
-                ProcessedWords.push(inputList[i]);
-                outputList.push(inputList[i]);
-            }
-        }
-        return outputList;
     }
 
     function resetStats() {    // needed if program is installed on Opening or Queen Bee page
@@ -439,8 +431,8 @@ async function getHints() {
     // DISPLAY FUNCTIONS
     //======================================
 
-    function UpdateMetaStats () {
-        if (GeniusScore === TotalPoints) {
+    function DisplayMetaStats () {
+        if (WordsTotal === WordsFound) {
             El.MetaStats3.innerHTML = 'QUEEN BEE:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp';
         }
         El.MetaStats2.innerHTML = TotalPoints + '<br>' + WordsTotal + `<br>` + WordsFound;
@@ -480,7 +472,7 @@ async function getHints() {
             // check for completed columns
             for (let col = ColStart; col <= ColEnd; col++) {
                 if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
-                    for (let row = item.rowStart; row <= item.rowEnd; row++) {
+                    for (let row = item.rowStart; row <= item.rowEnd + 1; row++) {
                         Cell[row][col].element.style.color = "lightsteelblue";
                     }
                 }
