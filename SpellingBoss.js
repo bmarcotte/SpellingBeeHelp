@@ -14,7 +14,6 @@ async function main() {
     //--------------------------------------
 
     const HintsHTML = await getHints();     // data from Spelling Bee page
-    let GeniusScore = await getGeniusScore();
     const hintDiv = setUpHintDiv();         // initialize DOM
 
     const El = {
@@ -23,7 +22,8 @@ async function main() {
         MetaStats3: document.getElementById('metastats3'),
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
-        WordList: document.querySelector('.sb-recent-words.sb-has-words'),
+        // WordList: document.querySelector('.sb-recent-words.sb-has-words'),
+        WordList: document.querySelector('.sb-wordlist-items-pag'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
         QueenBeePage: document.querySelector('.pz-moment__close'),
      }
@@ -71,9 +71,10 @@ async function main() {
     // Metastats
     let WordsTotal = 0;
     let WordsFound = 0;
-    let Pangrams = 0;
+    let PangramsTotal = 0;
     let PangramsFound = 0;
     let TotalPoints = 0;
+    let GeniusScore = await getGeniusScore();
     
     // Words data
     let LetterList = "";        // needed to find pangrams
@@ -234,8 +235,8 @@ async function main() {
         temp = paragraphs[2].textContent.split(/[^0-9]+/);
             WordsTotal = +temp[1];
             TotalPoints = +temp[2];
-            Pangrams = +temp[3];
-                if (temp[4] > 0) Pangrams = Pangrams + ' (' + temp[4] + ' Perfect)';
+            PangramsTotal = temp[3];
+                if (temp[4] > 0) PangramsTotal = PangramsTotal + ' (' + temp[4] + ' Perfect)';
 
          // char1Table (temporary data)
         let char1Table = [...HintsHTML.querySelectorAll('table tr')]
@@ -255,7 +256,6 @@ async function main() {
         // char2Table (temporary data)
         let char2Table = [];                        // char2Table (temporary data)
         let char2Raw = paragraphs[4].textContent.split(/[^A-Za-z0-9]+/);
-        debugger;
         let index = 1;
         let temp1 = [];
         let char = char2Raw[index][0];
@@ -380,15 +380,21 @@ async function main() {
     // -------------------------------------
     function UpdateList () {
     // -------------------------------------
-        let processList = [];                              // Culled list of new words added to WordList
-        const inputList = El.WordList.innerText.toUpperCase().split('\n');
+        // Cull ProcessedWords from WordList => new words into processList
+        let processList = [];                              // Culled list
+        let inputList = [];
+        if (El.WordList) {
+            inputList = El.WordList.innerText.toUpperCase().split('\n');
+        } else {
+            inputList = [];
+        }
         for (let i = 0; i < inputList.length; i++) {
             if (!ProcessedWords.includes(inputList[i])) {
                 ProcessedWords.push(inputList[i]);
                 processList.push(inputList[i]);
             }
         }
-
+        // Tally new words
         for (let i = 0; i < processList.length; i++) {     // Tally input words
             Table[Char2Row[(processList[i].slice(0, 2))]][ColIndex[processList[i].length]]++;
             WordsFound++;
@@ -402,11 +408,12 @@ async function main() {
             if (pangram) PangramsFound++;
         }
         Char1List.forEach(item => {item.sums()});             // summate columns and rows
+debugger;
         DisplayMetaStats();
         DisplayTable();
         return;
     }
-
+    
     function resetStats() {    // needed if program is installed on Opening or Queen Bee page
         ProcessedWords = [];
         WordsFound = 0;
@@ -436,7 +443,7 @@ async function main() {
             El.MetaStats3.innerHTML = 'QUEEN BEE:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp';
         }
         El.MetaStats2.innerHTML = TotalPoints + '<br>' + WordsTotal + `<br>` + WordsFound;
-        El.MetaStats4.innerHTML = GeniusScore + '<br>' + Pangrams + `<br>` + PangramsFound;
+        El.MetaStats4.innerHTML = GeniusScore + '<br>' + PangramsTotal + `<br>` + PangramsFound;
         return;
     }
 
@@ -484,21 +491,4 @@ async function main() {
 
 }       // end of main function
 })();   // end of outer shell function
-
-/* ==========================================================================
-    SEE getGeniusScore: SELECTS 8th ELEMENT
-    document.querySelector('[title="Click to see today’s ranks"]').click();
-    let modalList = await waitForElement('.sb-modal-list');
-    let ranks = modalList.querySelectorAll('li');
-    let geniusScore = ranks[8].innerText.replace(/\D/g, '');
-    document.querySelector('.sb-modal-close').click();
-    return geniusScore; 
-
-    ALTERNATIVE OPENING FOR FETCHING HINTS PAGE
-    fetch(hintsUrl).then(response => response.text()).then(html => {
-        const div = document.createElement('div');
-        div.innerHTML = html;                                         // translates string to DOM
-        const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
-        main(hints);
-    });
-=============================================================================*/
+// 
