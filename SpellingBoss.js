@@ -15,6 +15,7 @@ async function main() {
 
     const HintsHTML = await getHints();     // data from Spelling Bee page
     const hintDiv = setUpHintDiv();         // initialize DOM
+    // let openingPage = false;                // check if not on main page yet
 
     const El = {
         MetaStats1: document.getElementById('metastats1'),
@@ -22,7 +23,6 @@ async function main() {
         MetaStats3: document.getElementById('metastats3'),
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
-        // WordList: document.querySelector('.sb-recent-words.sb-has-words'),
         WordList: document.querySelector('.sb-wordlist-items-pag'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
         QueenBeePage: document.querySelector('.pz-moment__close'),
@@ -85,29 +85,37 @@ async function main() {
     // -------------------------------------
 
     /* ----- Insert our HTML and data into Spelling Bee ----- */
+    // debugger;
+    // let temp = [...El.WordList.querySelectorAll('li')];
+
+    // let word = El.WordList.innerText.toUpperCase().split('\n')[0];
+    // let temp = [...El.WordList.querySelectorAll('li')].map(tr => [...tr.querySelectorAll('li')].map(x => x.textContent));
+
+    // do {                // wait until off the opening pages
+    //     if (window.gameData['today']['answers'].includes(word)) openingPage = false;
+    // } while (openingPage);
     InitializeHints ();
 
     /* ----- Detect addition to Word List ----- */
-    //       main activity during game play
+    //       main activity during game pflay
     const observer = new MutationObserver(() => {
         UpdateList();
     });
     observer.observe(El.WordList, {childList: true});
 
     /* ----- Detect if bookmarklet starts from opening page ----- */
-    El.OpeningPage.addEventListener('click', openingPage);
+    El.OpeningPage.addEventListener('click', openingPages);
 
     /* ----- Detect if already Queen Bee on start up ----- */
-    El.QueenBeePage.addEventListener('click', queenBeePage);
+    El.QueenBeePage.addEventListener('click', openingPages);
 
 //======================================
 // GET DATA FROM SPELLING BEE PAGE
 //======================================
 
     async function getHints() {
-        const date = new Date(document.querySelector('.pz-game-date').textContent);
         const hintsUrl = 'https://www.nytimes.com/' +
-            date.toISOString().slice(0, 10).replaceAll('-', '/') +
+            window.gameData["today"]["printDate"].replaceAll('-', '/') +
             '/crosswords/spelling-bee-forum.html';
 
         const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
@@ -141,12 +149,7 @@ async function main() {
         });
     }
 
-    async function openingPage () {
-        setTimeout(resetStats, 500);
-        return;
-    }
-
-    async function queenBeePage() {
+    async function openingPages () {
         setTimeout(resetStats, 500);
         return;
     }
@@ -378,16 +381,21 @@ async function main() {
 //======================================
 
     // -------------------------------------
-    function UpdateList () {
+    function UpdateList () {    // DEBUG-THIS VERSION WORKS!!!
     // -------------------------------------
         // Cull ProcessedWords from WordList => new words into processList
         let processList = [];                              // Culled list
         let inputList = [];
-        if (El.WordList) {
-            inputList = El.WordList.innerText.toUpperCase().split('\n');
-        } else {
+        if (([...El.WordList.querySelectorAll('li')].length) === 0) {
             inputList = [];
+        } else {
+            inputList = El.WordList.innerText.toUpperCase().split('\n');
         }
+        // if (El.WordList) {   // DEBUG - TRY THIS ONE OUT ALSO
+        //     inputList = El.WordList.innerText.toUpperCase().split('\n');
+        // } else {
+        //     inputList = [];
+        // }
         for (let i = 0; i < inputList.length; i++) {
             if (!ProcessedWords.includes(inputList[i])) {
                 ProcessedWords.push(inputList[i]);
@@ -408,7 +416,6 @@ async function main() {
             if (pangram) PangramsFound++;
         }
         Char1List.forEach(item => {item.sums()});             // summate columns and rows
-debugger;
         DisplayMetaStats();
         DisplayTable();
         return;
@@ -441,6 +448,7 @@ debugger;
     function DisplayMetaStats () {
         if (WordsTotal === WordsFound) {
             El.MetaStats3.innerHTML = 'QUEEN BEE:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp';
+            GeniusScore = TotalPoints;
         }
         El.MetaStats2.innerHTML = TotalPoints + '<br>' + WordsTotal + `<br>` + WordsFound;
         El.MetaStats4.innerHTML = GeniusScore + '<br>' + PangramsTotal + `<br>` + PangramsFound;
