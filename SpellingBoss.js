@@ -1,7 +1,28 @@
-(() => {            // OUTER SHELL
+(async () => {            // OUTER SHELL
 'use strict';
 
-main();
+//======================================
+// WAIT TO LOAD PROGRAM
+//      do not load while on Welcome and Queen Bee pages
+//======================================
+
+    let x = document.getElementById('js-hook-pz-moment__welcome');      // Welcome page
+    let y = document.getElementById('js-hook-pz-moment__congrats');     // Queen Bee page
+    await waitForCondition(x,y);
+    main();
+
+function waitForCondition(elem1, elem2) {
+    return new Promise(resolveElement => {
+        const checkForCondition = () => {                         // both frames invisible
+            if (elem1.clientHeight + elem2.clientHeight === 0) {
+                resolveElement(true);
+            } else {
+                setTimeout(checkForCondition, 20);
+            }
+        };
+        checkForCondition();
+    });
+}
 
 //======================================
 // MAIN FUNCTION
@@ -15,7 +36,6 @@ async function main() {
 
     const HintsHTML = await getHints();     // data from Spelling Bee page
     const hintDiv = setUpHintDiv();         // initialize DOM
-    // let openingPage = false;                // check if not on main page yet
 
     const El = {
         MetaStats1: document.getElementById('metastats1'),
@@ -85,15 +105,6 @@ async function main() {
     // -------------------------------------
 
     /* ----- Insert our HTML and data into Spelling Bee ----- */
-    // debugger;
-    // let temp = [...El.WordList.querySelectorAll('li')];
-
-    // let word = El.WordList.innerText.toUpperCase().split('\n')[0];
-    // let temp = [...El.WordList.querySelectorAll('li')].map(tr => [...tr.querySelectorAll('li')].map(x => x.textContent));
-
-    // do {                // wait until off the opening pages
-    //     if (window.gameData['today']['answers'].includes(word)) openingPage = false;
-    // } while (openingPage);
     InitializeHints ();
 
     /* ----- Detect addition to Word List ----- */
@@ -103,19 +114,14 @@ async function main() {
     });
     observer.observe(El.WordList, {childList: true});
 
-    /* ----- Detect if bookmarklet starts from opening page ----- */
-    El.OpeningPage.addEventListener('click', openingPages);
-
-    /* ----- Detect if already Queen Bee on start up ----- */
-    El.QueenBeePage.addEventListener('click', openingPages);
-
 //======================================
 // GET DATA FROM SPELLING BEE PAGE
 //======================================
 
     async function getHints() {
         const hintsUrl = 'https://www.nytimes.com/' +
-            window.gameData["today"]["printDate"].replaceAll('-', '/') +
+        window.gameData.today.printDate.replaceAll('-', '/') +
+        // window.gameData["today"]["printDate"].replaceAll('-', '/') +
             '/crosswords/spelling-bee-forum.html';
 
         const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
@@ -137,21 +143,15 @@ async function main() {
     function waitForElement(selector) {
         return new Promise(resolveElement => {
             const checkForElement = () => {
-            let element = document.querySelector(selector);
-            if (element) {
-                resolveElement(element);
-            } else {
-                setTimeout(checkForElement, 10);
-            }
+                let element = document.querySelector(selector);
+                if (element) {
+                    resolveElement(element);
+                } else {
+                    setTimeout(checkForElement, 10);
+                }
             };
-
             checkForElement();
         });
-    }
-
-    async function openingPages () {
-        setTimeout(resetStats, 500);
-        return;
     }
 
     /* ----- Create DOM for our added HTML ----- */
@@ -226,8 +226,9 @@ async function main() {
 //======================================
 
     // -------------------------------------
-    // Read HINTS page and generate all tablesHeader
+    // Read HINTS page and generate all tables/lists
     // -------------------------------------
+
     function InitializeHints () {
         let temp;
         let wordLengths = [];       // word lengths, appended to header
@@ -291,14 +292,13 @@ async function main() {
        // Char1List, Char2List, Char2Row, and Table (permanent data)
         GetCharLists(char1Table, char2Table, header, lineBreak, spacer);
 
-        CreateHTMLTable();              // print our HINTS on Spelling Bee page
+        CreateHTMLTable();           
         UpdateList();
-        return;
+            return;
     }
 
+    // Permanent data: Char1List, Char2List, Char2Row, and Table
     function GetCharLists (char1Table, char2Table, header, lineBreak, spacer) {
-    // Create Char1List, Char2List, Char2Row, and Table
-
         let temp;
         let ch2Indx = 0;                            // iterates through Char2List
         let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
@@ -381,21 +381,16 @@ async function main() {
 //======================================
 
     // -------------------------------------
-    function UpdateList () {    // DEBUG-THIS VERSION WORKS!!!
+    function UpdateList () {
     // -------------------------------------
         // Cull ProcessedWords from WordList => new words into processList
-        let processList = [];                              // Culled list
-        let inputList = [];
-        if (([...El.WordList.querySelectorAll('li')].length) === 0) {
+        let processList = [];
+        let inputList = [...El.WordList.querySelectorAll('li')];
+        if (inputList.length === 0) {
             inputList = [];
         } else {
-            inputList = El.WordList.innerText.toUpperCase().split('\n');
+            inputList = [...inputList].map(x => x.textContent.toUpperCase());
         }
-        // if (El.WordList) {   // DEBUG - TRY THIS ONE OUT ALSO
-        //     inputList = El.WordList.innerText.toUpperCase().split('\n');
-        // } else {
-        //     inputList = [];
-        // }
         for (let i = 0; i < inputList.length; i++) {
             if (!ProcessedWords.includes(inputList[i])) {
                 ProcessedWords.push(inputList[i]);
@@ -421,15 +416,6 @@ async function main() {
         return;
     }
     
-    function resetStats() {    // needed if program is installed on Opening or Queen Bee page
-        ProcessedWords = [];
-        WordsFound = 0;
-        PangramsFound = 0;
-        zeroOutCounts();
-        UpdateList();
-        return;
-    }
-
     function zeroOutCounts() {
         Char1List.forEach(item => {
             for (let row = item.rowStart + 1; row <= item.rowEnd; row++) {
@@ -499,4 +485,3 @@ async function main() {
 
 }       // end of main function
 })();   // end of outer shell function
-// 

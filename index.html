@@ -1,4 +1,59 @@
 <html>
-    <title>Hive Helper</title>
-    <a href="fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))"></a>
+<a href="javascript:fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))"></a>
+The above does not seem to want to work, so create and use this bookmarklet (see README file for 
+explicit instructions): 
+
+javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+    fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))
+} else {
+    alert('This bookmarklet can only be launched from NYT Spelling Bee')
+}
+
 </html>
+<!-- 
+==========================================================================
+    SEE getGeniusScore: SELECTS 8th ELEMENT
+    document.querySelector('[title="Click to see today’s ranks"]').click();
+    let modalList = await waitForElement('.sb-modal-list');
+    let ranks = modalList.querySelectorAll('li');
+    let geniusScore = ranks[8].innerText.replace(/\D/g, '');
+    document.querySelector('.sb-modal-close').click();
+    return geniusScore; 
+
+    ALTERNATIVE OPENING FOR FETCHING HINTS PAGE
+    fetch(hintsUrl).then(response => response.text()).then(html => {
+        const div = document.createElement('div');
+        div.innerHTML = html;                                         // translates string to DOM
+        const hints = div.querySelector('.interactive-body > div');   // . = css selector; # = id selector
+        main(hints);
+    });
+=============================================================================
+<script type="text/javascript">
+    window.gameData = {
+        "today":{
+            "expiration":1673942400,
+            "displayWeekday":"Monday",
+            "displayDate":"January 16, 2023",
+            "printDate":"2023-01-16",
+            "centerLetter":"v",
+            "outerLetters":["a","e","g","i","n","w"],
+            "validLetters":["v","a","e","g","i","n","w"],
+            "pangrams":["weaving"],
+            "answers":["weaving","agave","avenge","avenging","avian","eave","even","evening","gavage","gave","give","given","giving","naive","nave","vagina","vain","vane","vegan","veggie","vegging","vein","view","viewing","vine","waive","waiving","wave","waving","weave"],
+            "id":25082,
+            "freeExpiration":0,
+            "editor":"Sam Ezersky"},
+        "yesterday":{
+            "displayWeekday":"Sunday",
+            "displayDate":"January 15, 2023",
+            "printDate":"2023-01-15",
+            "centerLetter":"b",
+            "outerLetters":["a","i","l","n","p","t"],
+            "validLetters":["b","a","i","l","n","p","t"],
+            "pangrams":["paintball"],
+            "answers":["paintball","alibi","baba","bail","bait","ball","banal","banana","bilabial","bill","blab","blat","blatant","blin","blini","blip","labia","labial","pinball","tabla","tibia","tibial"],
+            "id":20717,
+            "freeExpiration":0,
+            "editor":"Sam Ezersky"}}
+    </script>
+-->
