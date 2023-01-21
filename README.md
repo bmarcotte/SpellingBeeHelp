@@ -17,4 +17,4 @@ javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') 
 
 Hope this eases the task of tallying your entries!
 
-postDoc71 (ie retired pediatrician as of 1971)
+postDoc71 (ie retired pediatrician as of age 71)
