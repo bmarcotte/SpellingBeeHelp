@@ -1,28 +1,34 @@
 (async () => {            // OUTER SHELL
-'use strict';
+    'use strict';
+    
+    //======================================
+    // WAIT TO LOAD PROGRAM
+    //      do not load while on Welcome and Queen Bee pages
+    //======================================
 
-//======================================
-// WAIT TO LOAD PROGRAM
-//      do not load while on Welcome and Queen Bee pages
-//======================================
+    alert(window.hiveLoaded);       // do not allow to load more than once
+    if (window.hiveLoaded) {
+        alert('Bee Hive program has already been loaded.');
+        return;
+    }
+    window.hiveLoaded = true;
 
-    let x = document.getElementById('js-hook-pz-moment__welcome');      // Welcome page
-    let y = document.getElementById('js-hook-pz-moment__congrats');     // Queen Bee page
-    await waitForCondition(x,y);
+    await waitForCondition(document.getElementById('js-hook-pz-moment__welcome'),
+        document.getElementById('js-hook-pz-moment__congrats'));
     main();
 
-function waitForCondition(elem1, elem2) {
-    return new Promise(resolveElement => {
-        const checkForCondition = () => {                         // both frames invisible
-            if (elem1.clientHeight + elem2.clientHeight === 0) {
-                resolveElement(true);
-            } else {
-                setTimeout(checkForCondition, 20);
-            }
-        };
-        checkForCondition();
-    });
-}
+    function waitForCondition(welcome, queenBee) {
+        return new Promise(resolveElement => {
+            const checkForCondition = () => {                         // both frames invisible
+                if (welcome.clientHeight + queenBee.clientHeight === 0) {
+                    resolveElement(true);
+                } else {
+                    setTimeout(checkForCondition, 20);
+                }
+            };
+            checkForCondition();
+        });
+    }
 
 //======================================
 // MAIN FUNCTION
@@ -108,7 +114,7 @@ async function main() {
     InitializeHints ();
 
     /* ----- Detect addition to Word List ----- */
-    //       main activity during game pflay
+    //       main activity during game play
     const observer = new MutationObserver(() => {
         UpdateList();
     });
@@ -121,7 +127,6 @@ async function main() {
     async function getHints() {
         const hintsUrl = 'https://www.nytimes.com/' +
         window.gameData.today.printDate.replaceAll('-', '/') +
-        // window.gameData["today"]["printDate"].replaceAll('-', '/') +
             '/crosswords/spelling-bee-forum.html';
 
         const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
