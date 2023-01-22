@@ -3,11 +3,11 @@
     
     //======================================
     // WAIT TO LOAD PROGRAM
-    //      do not load while on Welcome and Queen Bee pages
+    //      Do not launch while on Welcome and Queen Bee pages
+    //      or if already launched
     //======================================
 
-    alert(window.hiveLoaded);       // do not allow to load more than once
-    if (window.hiveLoaded) {
+    if (window.hiveLoaded) {       // do not allow to launch more than once
         alert('Bee Hive program has already been loaded.');
         return;
     }
