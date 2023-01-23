@@ -10,19 +10,15 @@ To use, create a bookmarklet as follows:
 1.  From Bookmark manager, create a new boookmark.	
 	- Copy the block of text below:
 
-		javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
-		fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
-		.then(r => r.text()).then(t => eval(t))}
-		else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} 
-        <dt><table id="bookmarklet"><tr><td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+        <li><dt><table id="bookmarklet"><tr><td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
         fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
         .then(r => r.text()).then(t => eval(t))}
-        else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} </pre></td></tr></table></dt><br></li>
+        else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} </pre></td></tr></table></dt></li>
 
 	- In Chrome and Edge:  CTL-D, then [More].
 	- Paste the copied text into the URL box.
 
-		Name: Bee Hive (or whatever)
+		Name: Bee Hive (or whatever)<br>
 		URL:  copy and paste the copied text here
 
 2.  Launch Spelling Bee ('https://www.nytimes.comlpuzzles/spelling-bee').
