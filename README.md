@@ -21,7 +21,7 @@ To use, create a bookmarklet as follows:
 			Name: Bee Hive (or whatever)
 			URL: copy and paste the text here
 		
-	2.  Launch Spelling Bee
+	2.  Launch Spelling Bee ('https://www.nytimes.com/puzzles/spelling-bee')
 
 	3.  Click the Bee Hive bookmarklet on your Bookmarks bar.
 
