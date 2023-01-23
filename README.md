@@ -19,7 +19,7 @@ To use, create a bookmarklet as follows:
 	- Paste the copied text into the URL box.
 
 		Name: Bee Hive (or whatever)<br>
-		URL:  copy and paste the copied text here
+		URL: &nbsppaste the copied text here
 
 2.  Launch Spelling Bee ('https://www.nytimes.com/puzzles/spelling-bee').
 
