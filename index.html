@@ -1,16 +1,68 @@
+<!DOCTYPE html>
 <html>
-<a href="javascript:fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))"></a>
-The above does not seem to want to work, so create and use this bookmarklet (see README file for 
-explicit instructions): 
+<body>
 
-javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
-    fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))
-} else {
-    alert('This bookmarklet can only be launched from NYT Spelling Bee')
-}
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta autocomplete="off">
+    <meta font-family="Arial, Helvetica, sans-serif">
+    <title>Bee Hive</title>
+</head>
 
+<H3>BEE HIVE</H3>
+
+<p>Bee Hive inserts itself onto the NYT Spelling Bee web page, then tallies your <br>
+found words onto the Spelling Bee HINTS grid.  This only works on computers, not<br>
+phones.  Stay tuned; I may make a phone version later.<br>
+To use this program, you must start it from a bookmarklet.</p>
+
+<p>To use, create a bookmarklet as follows:</p>
+<ol>
+	<li>From Bookmark manager, create a new bookmark.<br>
+        <ul>
+            <li>Copy the text in the box below.<br>
+            <li>In Chrome and Edge: CTL-D, then [More].<br>
+            <li>Paste the copied text into the URL box.</li><br>
+        </ul>
+        <dt>&nbsp&nbsp&nbsp&nbspName:  Bee Hive (or whatever)</dt>
+        <dt>&nbsp&nbsp&nbsp&nbspURL: text below<br></dt>
+        <dt><table id="bookmarklet"><tr><td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+        fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
+        .then(r => r.text()).then(t => eval(t))}
+        else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} </pre></td></tr></table></dt><br></li>
+    <!-- <li>Launch <a id="lnk" href="https://www.nytimes.com/puzzles/spelling-bee" title="Click to start Spelling Bee">Spelling Bee</a><br><br></li> -->
+    <li>Launch <button title="Click to start Spelling Bee" onclick="document.location='https://www.nytimes.com/puzzles/spelling-bee'">Spelling Bee</button></li><br>
+    <li>Click the Bee Hive bookmarklet on your Bookmarks bar.</li>
+</ol>
+
+<p>This should ease the task of tallying your entries!</p>
+
+<p>Happy Hiving!<br>postDoc71 (ie retired pediatrician as of age 71)</p>
+  
+<style>
+    #bookmarklet {
+        border: 1px solid black;
+        width: 40ch;
+        padding: 4px;
+    }
+    #lnk:link {
+        color:darkblue;
+        background-color: whitesmoke;;
+        text-decoration: none;
+    }
+    #lnk:hover {
+        color: darkred;
+        background-color: whitesmoke;
+        text-decoration: none;
+    }
+</style>
+
+</body>
 </html>
-<!-- 
+
+<!-- STUFF BELOW.  KINDLY IGNORE.
 ==========================================================================
     SEE getGeniusScore: SELECTS 8th ELEMENT
     document.querySelector('[title="Click to see today’s ranks"]').click();

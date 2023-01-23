@@ -1,20 +1,31 @@
 BEE HIVE
 
-This program inserts itself onto the NYT Spelling Bee web page (https://www.nytimes.com/puzzles/spelling-bee). It tallies the found words onto the Spelling Bee HINTS grid.
+Bee Hive inserts itself onto the NYT Spelling Bee web page, then tallies your 
+found words onto the Spelling Bee HINTS grid.  This only works on computers, not
+phones.  Stay tuned; I may make a phone version later.
+To use this program, you must start it from a bookmarklet.
 
-To use:
+To use, create a bookmarklet as follows:
 
-- Create a bookmarklet as follows:
-	From Bookmark manager, create a new bookmark.
-		Name:  Bee Hive (or whatever)
-		URL: copy and paste the text below:
+	1.  From Bookmark manager, create a new bookmark.
+		- Copy the 5 lines of text below:
 
-javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {    fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))} else {alert('This bookmarklet can only be launched from NYT Spelling Bee')}
+			javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+			fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
+			.then(r => r.text()).then(t => eval(t))}
+			else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} 
 
-- Launch Spelling Bee.
-- Click the bookmarklet on your Bookmarks bar.
+		- In Chrome and Edge: CTL-D, then [More].
+		- Paste the copied text into the URL box.
 
+			Name: Bee Hive (or whatever)
+			URL: copy and paste the text here
+		
+	2.  Launch Spelling Bee
 
-Hope this eases the task of tallying your entries!
+	3.  Click the Bee Hive bookmarklet on your Bookmarks bar.
 
+This should ease the task of tallying your entries!
+
+Happy Hiving!
 postDoc71 (ie retired pediatrician as of age 71)

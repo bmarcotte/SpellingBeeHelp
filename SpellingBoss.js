@@ -3,12 +3,12 @@
     
     //======================================
     // WAIT TO LOAD PROGRAM
-    //      Do not launch while on Welcome and Queen Bee pages
-    //      or if already launched
+    //      Do not launch if already launched
+    //      or while on Welcome and Queen Bee pages
     //======================================
 
     if (window.hiveLoaded) {       // do not allow to launch more than once
-        alert('Bee Hive program has already been loaded.');
+        alert('Bee Hive program has already been loaded.\nPlease buzz on by (apian for continue).');
         return;
     }
     window.hiveLoaded = true;
@@ -19,11 +19,11 @@
 
     function waitForCondition(welcome, queenBee) {
         return new Promise(resolveElement => {
-            const checkForCondition = () => {                         // both frames invisible
+            const checkForCondition = () => {           // both frames invisible
                 if (welcome.clientHeight + queenBee.clientHeight === 0) {
                     resolveElement(true);
                 } else {
-                    setTimeout(checkForCondition, 20);
+                    setTimeout(checkForCondition, 10);
                 }
             };
             checkForCondition();
