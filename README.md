@@ -8,12 +8,16 @@ To use this program, you must start it from a bookmarklet.
 To use, create a bookmarklet as follows:
 
 1.  From Bookmark manager, create a new boookmark.	
-	- Copy the 5 lines of text below:
+	- Copy the block of text below:
 
 		javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
 		fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
 		.then(r => r.text()).then(t => eval(t))}
 		else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} 
+        <dt><table id="bookmarklet"><tr><td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+        fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
+        .then(r => r.text()).then(t => eval(t))}
+        else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} </pre></td></tr></table></dt><br></li>
 
 	- In Chrome and Edge:  CTL-D, then [More].
 	- Paste the copied text into the URL box.
