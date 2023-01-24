@@ -13,6 +13,8 @@
     }
     window.hiveLoaded = true;
 
+    // main();
+
     await waitForCondition(document.getElementById('js-hook-pz-moment__welcome'),
         document.getElementById('js-hook-pz-moment__congrats'));
     main();
@@ -100,7 +102,11 @@ async function main() {
     let PangramsTotal = 0;
     let PangramsFound = 0;
     let TotalPoints = 0;
-    let GeniusScore = await getGeniusScore();
+
+debugger;
+
+    let GeniusScore = "DK";
+    // let GeniusScore = await getGeniusScore();
     
     // Words data
     let LetterList = "";        // needed to find pangrams
@@ -138,6 +144,7 @@ async function main() {
     }
 
     async function getGeniusScore() {
+        debugger;
         document.querySelector('[title="Click to see today’s ranks"]').click();
         let element = await waitForElement('.sb-modal-list li:last-of-type');
         let score = element.innerText.replace(/\D/g, '');
@@ -178,7 +185,7 @@ async function main() {
         <table>
             <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
             <td id="metastats2"></td>
-            <td id="metastats3">Genius:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
+            <td id="metastats3">Genius level:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
         </table><table id="table0"></table><br>
         <style>
