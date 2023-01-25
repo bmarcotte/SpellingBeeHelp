@@ -25,8 +25,7 @@ To use, create a bookmarklet as follows:
 
 3.  Click the Bee Hive bookmarklet on your Bookmarks bar.
 
-This should ease the task of tallying your entries!<br>
-NB: Genius score currently not available.
+This should ease the task of tallying your entries!
 
 Happy Hiving!<br>
 postDoc71 (retired pediatrician since age 71)

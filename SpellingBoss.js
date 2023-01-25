@@ -102,11 +102,7 @@ async function main() {
     let PangramsTotal = 0;
     let PangramsFound = 0;
     let TotalPoints = 0;
-
-debugger;
-
-    let GeniusScore = "DK";
-    // let GeniusScore = await getGeniusScore();
+    let GeniusScore = await getGeniusScore();
     
     // Words data
     let LetterList = "";        // needed to find pangrams
@@ -144,10 +140,9 @@ debugger;
     }
 
     async function getGeniusScore() {
-        debugger;
-        document.querySelector('[title="Click to see today’s ranks"]').click();
-        let element = await waitForElement('.sb-modal-list li:last-of-type');
-        let score = element.innerText.replace(/\D/g, '');
+        [...document.querySelectorAll(".pz-dropdown__menu-item")][1].click();
+        let element = await waitForElement('.sb-modal-list');
+        let score = element.querySelectorAll('li')[8].innerText.replace(/\D/g, '');        
         document.querySelector('.sb-modal-close').click();
         return score;
     }
