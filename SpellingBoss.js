@@ -1,20 +1,18 @@
 (async () => {            // OUTER SHELL
     'use strict';
     
-    //======================================
-    // WAIT TO LOAD PROGRAM
-    //      Do not launch if already launched
-    //      or while on Welcome and Queen Bee pages
-    //======================================
+//======================================
+// LOAD PROGRAM AFTER CONDITIONS MET
+//======================================
 
-    if (window.hiveLoaded) {       // do not allow to launch more than once
+    /* ----- Do not allow to launch more than once ----- */
+    if (window.hiveLoaded) {
         alert('Bee Hive program has already been loaded.\nPlease buzz on by (apian for continue).');
         return;
     }
     window.hiveLoaded = true;
 
-    // main();
-
+    /* ----- Do not launch while on Welcome or Queen Bee pages ----- */
     await waitForCondition(document.getElementById('js-hook-pz-moment__welcome'),
         document.getElementById('js-hook-pz-moment__congrats'));
     main();
@@ -189,6 +187,7 @@ async function main() {
             <td id="metastats4"></td>
         </table><table id="table0"></table><br>
         <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
+        <br><br>Σ = total words&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = words found
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -251,7 +250,7 @@ async function main() {
         LetterList = paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
         temp = paragraphs[2].textContent.split(/[^0-9]+/);
             WordsTotal = +temp[1];
-            TotalPoints = +temp[2];
+            TotalPoints = temp[2];
             PangramsTotal = temp[3];
                 if (temp[4] > 0) PangramsTotal = PangramsTotal + ' (' + temp[4] + ' Perfect)';
 
@@ -322,7 +321,7 @@ async function main() {
             Char1List[chTableIndx].rowStart = row;
             Char1List[chTableIndx].rowEnd = row + (char2Table[chTableIndx].length / 2);
             Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
-            temp = ['Letter', 'Σ', '#', 'Σ>'];
+            temp = ['', 'Σ', '#', 'Σ>'];
             temp.length = ColEnd + 1;
             for (let j = 4; j <=  ColEnd; j++) {                    // Char1 stats line
                 temp[j] = char1Table[chTableIndx][j - 3];
@@ -441,9 +440,9 @@ async function main() {
         return;
     }
 
-    //======================================
-    // DISPLAY FUNCTIONS
-    //======================================
+//======================================
+// DISPLAY FUNCTIONS
+//======================================
 
     function DisplayMetaStats () {
         if (WordsTotal === WordsFound) {
