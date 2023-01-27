@@ -21,12 +21,14 @@ while on the Spelling Bee web page.</p>
 <ol>
 	<li>From Bookmark manager, create a new bookmark.<br>
         <ul>
-            <li>Press the Copy button below.<br>
+            <li>Copy this text to paste into the URL:&nbsp;
+                <input hidden type="text" value="javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))}
+else {alert('This bookmarklet can only be launched from NYT Spelling Bee')}" id="myInput">
                 <input type="text" value="javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
-                    fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js')
-                    .then(r => r.text()).then(t => eval(t))}
-                    else {alert('This bookmarklet can only be launched from NYT Spelling Bee')}" id="myInput">
-                <button title="Copy text for URL" onclick="copyURL('myInput')">Copy</button><br>
+fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))}
+else {alert('This bookmarklet can only be launched from NYT Spelling Bee')}">
+                <button id="copyButton" title="Copy text for URL" onclick="copyURL('myInput')">Copy</button></li>
             <li>In Chrome and Edge: CTL-D, then [More].<br>
             <li>Paste the copied text into the URL box.</li>
         </ul>
@@ -48,28 +50,17 @@ while on the Spelling Bee web page.</p>
     function copyURL(input) {
       var copyText = document.getElementById(input);
       copyText.select();
-//   copyText.setSelectionRange(0, 99999); // For mobile devices
-      // Copy the text inside the text field
+    //   copyText.setSelectionRange(0, 99999); // For mobile devices
       navigator.clipboard.writeText(copyText.value);
+      alert(`URL text copied:\n` + copyText.value);
       return;
     }
 </script>
 
 <style>
-    #bookmarklet {
-        border: 1px solid black;
-        width: 40ch;
-        padding: 4px;
-    }
-    #lnk:link {
-        color:darkblue;
-        background-color: whitesmoke;;
-        text-decoration: none;
-    }
-    #lnk:hover {
-        color: darkred;
-        background-color: whitesmoke;
-        text-decoration: none;
+    html * {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: medium;
     }
 </style>
 
