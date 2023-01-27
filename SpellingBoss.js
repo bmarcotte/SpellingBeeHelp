@@ -458,41 +458,46 @@ async function main() {
     function DisplayTable () {
         // Map Table to HTML
         for (let i = 0; i < TableTotalRows; i++) {
-            for (let j = 0; j <= ColEnd; j++) {
-                Cell[i][j].element.innerHTML = Table[i][j];
-            }
+            for (let j = 0; j <= ColEnd; j++) Cell[i][j].element.innerText = Table[i][j];
         }
 
         // Display helpful "0"s by filtering out unhelpful "0"s into "".
         Char1List.forEach(item => {
             for (let col = ColStart; col <= ColEnd; col ++) {
                 if (Table[item.rowStart][col] == 0) {
-                    for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++) {
-                        Cell[row][col].element.innerHTML = '';
-                    }
+                    for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++)
+                        Cell[row][col].element.innerText = '';
                 }
             }
         });
 
-        // Gray out completed rows and columns
+        // Gray out and hide completed rows and columns
         Char1List.forEach(item => {
-            // check for completed rows
-            for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
-                if (Table[row][1] === Table[row][2]) {
-                    for (let col =0; col <= ColEnd; col++) {
+            if (item.total === Table[item.rowEnd + 1][2]) {         // No Char1 -> do the entire section
+                for (let row = item.rowStart - 3; row <= item.rowEnd + 1; row++) {
+                    for (let col = 0; col <= ColEnd; col++) {
                         Cell[row][col].element.style.color = "lightsteelblue";
                         if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                     }
                 }
-            }
-            // check for completed columns
-            for (let col = ColStart; col <= ColEnd; col++) {
-                if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
-                    for (let row = item.rowStart; row <= item.rowEnd + 1; row++) {
-                        Cell[row][col].element.style.color = "lightsteelblue";
-                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                } else {                                            // otherwise check for individual rows and columns
+                // check for completed rows
+                for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
+                    if (Table[row][1] === Table[row][2]) {
+                        for (let col =0; col <= ColEnd; col++) {
+                            Cell[row][col].element.style.color = "lightsteelblue";
+                            if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                        }
                     }
-                    if (HideBlankCells) Cell[item.rowStart - 1][col].element.setAttribute("hidden", "");
+                }
+                // check for completed columns
+                for (let col = ColStart; col <= ColEnd; col++) {
+                    if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
+                        for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++) {
+                            Cell[row][col].element.style.color = "lightsteelblue";
+                            if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                        }
+                    }
                 }
             }
         });
@@ -505,37 +510,22 @@ async function main() {
         Char1List.forEach(item => {
             if (item.total === Table[item.rowEnd + 1][2]) {         // No Char1
                 for (let row = item.rowStart - 3; row <= item.rowEnd + 1; row++) {
-                    for (let col = 0; col <= ColEnd; col++) {
-                        if (HideBlankCells) {
-                            Cell[row][col].element.setAttribute("hidden", "");
-                        } else {
-                            Cell[row][col].element.removeAttribute("hidden");
-                        }
-                    }
+                    for (let col = 0; col <= ColEnd; col++) 
+                        HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                 }
             } else {        // otherwise check for individual rows and columns
                 // toggle rows
                 for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
                     if (Table[row][1] === Table[row][2]) {
-                        for (let col =0; col <= ColEnd; col++) {
-                            if (HideBlankCells) {
-                                Cell[row][col].element.setAttribute("hidden", "");
-                            } else {
-                                Cell[row][col].element.removeAttribute("hidden");
-                            }
-                        }
+                        for (let col =0; col <= ColEnd; col++)
+                            HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                     }
                 }
                 // toggle columns
                 for (let col = ColStart; col <= ColEnd; col++) {
                     if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
-                        for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++) {
-                            if (HideBlankCells) {
-                                Cell[row][col].element.setAttribute("hidden", "");
-                            } else {
-                                Cell[row][col].element.removeAttribute("hidden");
-                            }
-                        }
+                        for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++)
+                            HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                     }
                 }
             }
