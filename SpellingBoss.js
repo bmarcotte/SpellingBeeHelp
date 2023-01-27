@@ -481,6 +481,7 @@ async function main() {
                 if (Table[row][1] === Table[row][2]) {
                     for (let col =0; col <= ColEnd; col++) {
                         Cell[row][col].element.style.color = "lightsteelblue";
+                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                     }
                 }
             }
@@ -489,7 +490,9 @@ async function main() {
                 if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
                     for (let row = item.rowStart; row <= item.rowEnd + 1; row++) {
                         Cell[row][col].element.style.color = "lightsteelblue";
+                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                     }
+                    if (HideBlankCells) Cell[item.rowStart - 1][col].element.setAttribute("hidden", "");
                 }
             }
         });
