@@ -51,6 +51,7 @@ async function main() {
         MetaStats3: document.getElementById('metastats3'),
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
+        HideBlankCells: document.getElementById('hideEmptyCells'),
         WordList: document.querySelector('.sb-wordlist-items-pag'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
         QueenBeePage: document.querySelector('.pz-moment__close'),
@@ -92,6 +93,7 @@ async function main() {
     let ColEnd = 0;
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
+    let HideBlankCells = false;
     let Char1List = [];         // Pointers into Table
     let Char2List = [];
     let Char2Row = {};          // hash table: Char2 -> row
@@ -121,6 +123,9 @@ async function main() {
         UpdateList();
     });
     observer.observe(El.WordList, {childList: true});
+
+    /* ----- Toggle hiding blank cells ----- */
+    El.HideBlankCells.addEventListener('click', ToggleHiddenCells);
 
 //======================================
 // GET DATA FROM SPELLING BEE PAGE
@@ -183,6 +188,7 @@ async function main() {
             <td id="metastats3">Genius level:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
         </table><table id="table0"></table><br>
+        <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -282,13 +288,10 @@ async function main() {
             }
         }
 
-        // Header, LineBreak, Spacer row templates
+        // Header and Spacer row templates
         ColEnd = wordLengths.length + 3;
         let header = ['', '', '', ''];
         wordLengths.forEach(item => header.push(item));
-        let lineBreak = ['-', '-', '-', '-'];
-        lineBreak.length = ColEnd + 1;
-        lineBreak.fill('-', 4, ColEnd + 1);
         let spacer = ['', '', '', '',];
         spacer.length = ColEnd + 1;
         spacer.fill('', 4, ColEnd + 1);
@@ -297,7 +300,7 @@ async function main() {
         }
 
        // Char1List, Char2List, Char2Row, and Table (permanent data)
-        GetCharLists(char1Table, char2Table, header, lineBreak, spacer);
+        GetCharLists(char1Table, char2Table, header, spacer);
 
         CreateHTMLTable();           
         UpdateList();
@@ -305,13 +308,13 @@ async function main() {
     }
 
     // Permanent data: Char1List, Char2List, Char2Row, and Table
-    function GetCharLists (char1Table, char2Table, header, lineBreak, spacer) {
+    function GetCharLists (char1Table, char2Table, header, spacer) {
         let temp;
         let ch2Indx = 0;                            // iterates through Char2List
         let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
         let row = 3;
         for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
-            Table.push(lineBreak);
+            Table.push(spacer);
             Table.push(spacer);
             Table.push(header);
             Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
@@ -379,6 +382,10 @@ async function main() {
                 for (let k = ColStart; k <= ColEnd; k++) {
                     Cell[j][k].element.style.backgroundColor = "whitesmoke";
                 }
+            }
+            for (let j = 0; j <= ColEnd; j++) {
+                let row = Char1List[i].rowStart - 3;
+                Cell[row][j].element.style.borderBottom = "1px solid black";
             }
         }
         return;
@@ -487,6 +494,49 @@ async function main() {
             }
         });
 
+        return;
+    }
+
+    function ToggleHiddenCells () {
+        HideBlankCells = HideBlankCells ? false : true; 
+        Char1List.forEach(item => {
+            if (item.total === Table[item.rowEnd + 1][2]) {         // No Char1
+                for (let row = item.rowStart - 3; row <= item.rowEnd + 1; row++) {
+                    for (let col = 0; col <= ColEnd; col++) {
+                        if (HideBlankCells) {
+                            Cell[row][col].element.setAttribute("hidden", "");
+                        } else {
+                            Cell[row][col].element.removeAttribute("hidden");
+                        }
+                    }
+                }
+            } else {        // otherwise check for individual rows and columns
+                // toggle rows
+                for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
+                    if (Table[row][1] === Table[row][2]) {
+                        for (let col =0; col <= ColEnd; col++) {
+                            if (HideBlankCells) {
+                                Cell[row][col].element.setAttribute("hidden", "");
+                            } else {
+                                Cell[row][col].element.removeAttribute("hidden");
+                            }
+                        }
+                    }
+                }
+                // toggle columns
+                for (let col = ColStart; col <= ColEnd; col++) {
+                    if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
+                        for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++) {
+                            if (HideBlankCells) {
+                                Cell[row][col].element.setAttribute("hidden", "");
+                            } else {
+                                Cell[row][col].element.removeAttribute("hidden");
+                            }
+                        }
+                    }
+                }
+            }
+        });
         return;
     }
 
