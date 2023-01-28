@@ -40,8 +40,9 @@ async function main() {
     // MAIN CONSTANTS AND VARIABLES
     //--------------------------------------
 
-    const HintsHTML = await getHints();     // data from Spelling Bee page
-    const hintDiv = setUpHintDiv();         // initialize DOM
+    const devicePhone = detectPhoneDevice();    // true if device is phone
+    const HintsHTML = await getHints();         // data from Spelling Bee page
+    const hintDiv = setUpHintDiv();             // initialize DOM
 
     const El = {
         MetaStats1: document.getElementById('metastats1'),
@@ -126,9 +127,10 @@ async function main() {
     El.HideBlankCells.addEventListener('click', ToggleHiddenCells);
 
 //======================================
-// GET DATA FROM SPELLING BEE PAGE
+// GET SYSTEM DATA
 //======================================
 
+    /* ----- Open Today's Hints page for data ----- */
     async function getHints() {
         const hintsUrl = 'https://www.nytimes.com/' +
         window.gameData.today.printDate.replaceAll('-', '/') +
@@ -142,6 +144,22 @@ async function main() {
         return hints;
     }
 
+    /* ----- Detect device ----- */
+    function detectPhoneDevice () {
+        if (navigator.userAgent.match(/Android/i)
+        || navigator.userAgent.match(/webOS/i)
+        || navigator.userAgent.match(/iPhone/i)
+        || navigator.userAgent.match(/iPad/i)
+        || navigator.userAgent.match(/iPod/i)
+        || navigator.userAgent.match(/BlackBerry/i)
+        || navigator.userAgent.match(/Windows Phone/i)) {
+           return true ;
+        } else {
+           return false ;
+        }
+     }
+
+    /* ----- Open Rankings pop-up for data ----- */
     async function getGeniusScore() {
         [...document.querySelectorAll(".pz-dropdown__menu-item")][1].click();
         let element = await waitForElement('.sb-modal-list');
@@ -166,16 +184,20 @@ async function main() {
 
     /* ----- Create DOM for our added HTML ----- */
     function setUpHintDiv() {
-        const gameScreen = document.querySelector('.pz-game-screen');
+        let gameScreen;
+        if (devicePhone) {
+            gameScreen = document.querySelector('#portal-game-moments');
+        } else { 
+            gameScreen = document.querySelector('.pz-game-screen');
+        }
         const parent = gameScreen.parentElement;
-
         const container = document.createElement('div');
         container.style.display = 'flex';
         container.append(gameScreen);
         parent.append(container);
 
         const hintDiv = document.createElement('div');
-        hintDiv.style.padding = '12px';
+        hintDiv.style.padding = '10px';
         container.append(hintDiv);
 
         // Our added HTML
