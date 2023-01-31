@@ -11,7 +11,11 @@ while on the Spelling Bee web page.
 1.  From Bookmark manager, create a new boookmark.	
 	- Copy the block of text below:
 
-        <dt><table id="bookmarklet" word-wrap="normal"><tr><td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))} else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} </pre><td></tr></table>
+        <dt><table id="bookmarklet" word-wrap="normal"><tr>
+		<td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {fetch('https://
+		raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))} 
+		else {alert('This bookmarklet can only be launched from NYT Spelling Bee')} </pre><td>
+		</tr></table>
 		</dt>
 
 	- In Chrome and Edge:  CTL-D, then [More].
