@@ -13,8 +13,9 @@
     window.hiveLoaded = true;
 
     /* ----- Do not launch while on Welcome or Queen Bee pages ----- */
-    await waitForCondition(document.getElementById('js-hook-pz-moment__welcome'),
-        document.getElementById('js-hook-pz-moment__congrats'));
+    await waitForCondition(
+        document.getElementById('js-hook-pz-moment__welcome'),      // Welcome page
+        document.getElementById('js-hook-pz-moment__congrats'));    // Queen Bee page
     main();
 
     function waitForCondition(welcome, queenBee) {
@@ -53,6 +54,7 @@ async function main() {
         MetaStats3: document.getElementById('metastats3'),
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
+        TableHeader: document.getElementById('header'),
         HideBlankCells: document.getElementById('hideEmptyCells'),
         // ShowRemaining: document.getElementById('showRemaining'),
         // <br><input id="showRemaining" type="checkbox">Show number of words remaining</input>
@@ -211,14 +213,16 @@ async function main() {
 
         // Our added HTML
         hintDiv.innerHTML = `
+        <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
+        <br><table id="header"><tr><td>Σ = total words&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = words found</tr></td></table>
+        <table id="table0">
+        </table><br>
         <table>
             <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
             <td id="metastats2"></td>
             <td id="metastats3">Genius level:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
-        </table><table id="table0"></table><br>
-        <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
-        <br><br>Σ = total words&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = words found
+        </table>
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -258,6 +262,9 @@ async function main() {
                 margin-left: 5ch;
                 margin-right: 5ch;
                 text-align: center;
+            }
+            #header td {
+                padding-top: 4px;
             }
         </style>
         `;
@@ -388,8 +395,9 @@ async function main() {
             row +=4;
             chTableIndx++;
         }
+        Table.push(spacer);
         char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
-        TableTotalRows = char2List.length + (Char1List.length * 5);
+        TableTotalRows = char2List.length + (Char1List.length * 5) + 1;
         return;
     }
 
@@ -437,9 +445,13 @@ async function main() {
                 Cell[row][col].element.style.borderBottom = "1px solid black";
             }
         }
+        for (let col = 0; col <= ColEnd; col++) {
+            Cell[TableTotalRows - 1][col].element.style.borderBottom = "1px solid black";
+        }
         return;
     }
- //======================================
+
+//======================================
 // MAIN SUPPORTING FUNCTION:  UPDATE TABLES FROM FOUND WORDS
 //======================================
 
@@ -526,9 +538,10 @@ async function main() {
                         }
                     }
                 }
-                if (Table[item.rowTotal][col] === 0) {             // empty column
-                for (let row = item.rowHeader; row <= item.rowEndChar1; row++) 
-                    Cell[row][col].element.setAttribute("hidden", "");
+                // empty column
+                if (Table[item.rowTotal][col] === 0) {
+                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) 
+                        Cell[row][col].element.setAttribute("hidden", "");
                 }
             }
             // remove/gray out section if Char1 complete
@@ -542,9 +555,10 @@ async function main() {
                         Cell[row][col].element.removeAttribute("hidden");
                     }
                 }
-                Cell[item.rowTotal][1].element.style.color = "lightsteelblue";
-                Cell[item.rowTotal][2].element.style.color = "lightsteelblue";
-                Cell[item.rowTotal][3].element.style.color = "lightsteelblue";
+                for (let col = 1; col <= 3; col++) {
+                    Cell[item.rowTotal][col].element.style.color = "lightsteelblue";
+                    if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                }
             }
         });
         return;
