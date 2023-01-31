@@ -30,5 +30,3 @@ while on the Spelling Bee web page.
 	- Click the Bee Hive bookmarklet on your Bookmarks bar.
 
 This should ease the task of tallying your entries!
-
-Happy Hiving!<br>
