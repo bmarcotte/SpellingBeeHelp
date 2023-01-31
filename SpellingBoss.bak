@@ -40,7 +40,8 @@ async function main() {
     // MAIN CONSTANTS AND VARIABLES
     //--------------------------------------
 
-    const devicePhone = detectPhoneDevice();    // true if device is phone
+    // const devicePhone = detectPhoneDevice();    // true if device is phone
+    const devicePhone = false;    // true if device is phone
     const HintsHTML = await getHints();         // data from Spelling Bee page
     const hintDiv = setUpHintDiv();             // initialize DOM
 

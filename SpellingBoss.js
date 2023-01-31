@@ -510,8 +510,7 @@ async function main() {
         for (let i = 0; i < TableTotalRows; i++) {
             for (let j = 0; j <= ColEnd; j++) Cell[i][j].element.innerText = Table[i][j];
         }
-
-       // Gray out and hide completed rows and columns
+        // Gray out and hide completed rows and columns
         Char1List.forEach(item => {
             // check for completed rows
             for (let row = item.rowStartData; row <= item.rowEndData; row++) {
@@ -561,6 +560,14 @@ async function main() {
                 }
             }
         });
+        // DEBUG: FIX rowFound EMPTY COLUMN ELIMINATION
+        Char1List.forEach(item => {
+            for (let col = ColStart; col <= ColEnd; col++) {
+                if (Table[item.rowTotal][col] === 0) {
+                    Cell[item.rowFound][col].element.setAttribute("hidden", "");
+                }
+            }
+        })
         return;
     }
 
