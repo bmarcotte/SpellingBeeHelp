@@ -72,7 +72,6 @@ async function main() {
         rowStartData: 0,        // letter subtotals (in gray)
         rowEndData: 0,
         rowEndChar1: 0,         // last line
-        count: [],              // word length subtotals
         total: 0,               // total number of words
         sums() {
             for (let col = ColStart - 2; col <= ColEnd; col++) {  // summate columns
@@ -539,8 +538,9 @@ async function main() {
                 }
                 // empty column
                 if (Table[item.rowTotal][col] === 0) {
-                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) 
+                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
                         Cell[row][col].element.setAttribute("hidden", "");
+                    }
                 }
             }
             // remove/gray out section if Char1 complete
@@ -556,7 +556,7 @@ async function main() {
                 }
                 for (let col = 1; col <= 3; col++) {
                     Cell[item.rowTotal][col].element.style.color = "lightsteelblue";
-                    if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                    if (HideBlankCells) Cell[item.rowTotal][col].element.setAttribute("hidden", "");
                 }
             }
         });
