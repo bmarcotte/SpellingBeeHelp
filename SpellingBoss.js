@@ -64,8 +64,7 @@ async function main() {
      }
 
     // Table data
-    let Char1Obj = {            // Char1List obj
-        char1: '',
+    let tblPtrObj = {           // TablePtrs obj
         rowHeader: 0,           // header row
         rowTotal: 0,            // total words in each column
         rowFound: 0,            // words found on each column
@@ -73,6 +72,7 @@ async function main() {
         rowEndData: 0,
         rowEndChar1: 0,         // last line
         total: 0,               // total number of words
+        found: 0,               // found words
         sums() {
             for (let col = ColStart - 2; col <= ColEnd; col++) {  // summate columns
                 if (col == ColStart - 1) continue;
@@ -98,13 +98,13 @@ async function main() {
         },
     };
     let Table = [];             // Main Table array
-    let Cell = [];              // element references for Table
+    let TablePtrs = [];         // Pointers into Table
+    let Char2Row = {};          // hash table: Char2 -> row
     const ColStart = 4;         // table data
     let ColEnd = 0;
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
-    let Char1List = [];         // Pointers into Table
-    let Char2Row = {};          // hash table: Char2 -> row
+    let Cell = [];              // element references for Table
     let HideBlankCells = false;
 
     // Metastats
@@ -213,7 +213,10 @@ async function main() {
         // Our added HTML
         hintDiv.innerHTML = `
         <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
-        <br><table id="header"><tr><td>Σ = total words&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = words found</tr></td></table>
+        <br><table id="header"><tr>
+            <td>Σ = <font color="mediumvioletred"><b>total words</b>
+            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words found</b></td>
+            </tr></table>
         <table id="table0">
         </table><br>
         <table>
@@ -334,7 +337,7 @@ async function main() {
             ColIndex[wordLengths[i - 4]] = i;
         }
 
-       // Create Char1List, Char2Row, and Table (permanent data)
+       // Create TablePtrs, Char2Row, and Table (permanent data)
         GetCharLists(char1Table, char2Table, header, spacer);
 
         CreateHTMLTable();           
@@ -342,7 +345,7 @@ async function main() {
             return;
     }
 
-    // Permanent data: Char1List, Char2Row, and Table
+    // Permanent data: TablePtrs, Char2Row, and Table
     function GetCharLists (char1Table, char2Table, header, spacer) {
         let char2Obj = {                            // char2List obj
             char2: '',
@@ -351,25 +354,24 @@ async function main() {
         let char2List = [];
         let temp;
         let ch2Indx = 0;                            // iterates through char2List
-        let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
+        let chTableIndx = 0;                        // iterates through TablePtrs and char1Table/char2Table
         let row = 3;
         for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
-            Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
-            Char1List[chTableIndx].char1 = char1Table[chTableIndx][0];
-            Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
+            TablePtrs[chTableIndx] = Object.assign({}, tblPtrObj);   // Char1 line
+            TablePtrs[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
             Table.push(spacer);
             Table.push(spacer);
             Table.push(header);
-            Char1List[chTableIndx].rowHeader = row - 1;
+            TablePtrs[chTableIndx].rowHeader = row - 1;
             temp = ['', 'Σ', '#', 'Σ>'];
             temp.length = ColEnd + 1;
             for (let j = 4; j <=  ColEnd; j++) {                    // Char1 stats line (rowTotal)
                 temp[j] = char1Table[chTableIndx][j - 3];
             }
             Table.push(temp);
-            Char1List[chTableIndx].rowTotal = row;
+            TablePtrs[chTableIndx].rowTotal = row;
             row++;
-            Char1List[chTableIndx].rowStartData = row;
+            TablePtrs[chTableIndx].rowStartData = row;
             for (let j = 0; j < char2Table[chTableIndx].length; j++) {  // Char2 lines
                 char2List[ch2Indx] = Object.assign({}, char2Obj);
                 char2List[ch2Indx].row = row;
@@ -380,13 +382,13 @@ async function main() {
                 ch2Indx++;
                 row++;
             }
-            Char1List[chTableIndx].rowEndData = row -1;
-            temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];    // Char1List.rowFound
+            TablePtrs[chTableIndx].rowEndData = row -1;
+            temp = ['Σ', TablePtrs[chTableIndx].total, 0, '#>'];    // TablePtrs.rowFound
             temp.length = ColEnd + 1;
             Table.push(temp);
-            Char1List[chTableIndx].rowFound = row;
-            Char1List[i].rowEndChar1 = row;
-            for (let row = Char1List[i].rowStartData; row <= Char1List[i].rowEndData; row++) {
+            TablePtrs[chTableIndx].rowFound = row;
+            TablePtrs[i].rowEndChar1 = row;
+            for (let row = TablePtrs[i].rowStartData; row <= TablePtrs[i].rowEndData; row++) {
                 for (let col = ColStart; col <= ColEnd; col++) {    // zero out tally area
                     Table[row][col] = 0;
                 }
@@ -396,7 +398,7 @@ async function main() {
         }
         Table.push(spacer);
         char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
-        TableTotalRows = char2List.length + (Char1List.length * 5) + 1;
+        TableTotalRows = char2List.length + (TablePtrs.length * 5) + 1;
         return;
     }
 
@@ -414,36 +416,36 @@ async function main() {
         }
         // Cell colors
         let row;
-        for (let i = 0; i < Char1List.length; i++) {
-            row = Char1List[i].rowTotal;
+        TablePtrs.forEach(item => {
+            row = item.rowTotal;
             for (let col = ColStart; col <= ColEnd; col++) {        // Total words
                 Cell[row][col].element.style.color = 'mediumvioletred';
                 Cell[row][col].element.style.fontWeight = 'bold';
             }
-            row = Char1List[i].rowFound;
+            row = item.rowFound;
             for (let col = ColStart; col <= ColEnd; col++) {        // Found words
                 Cell[row][col].element.style.fontWeight = 'bold';
             }
-                                                                    // Column data
-            for (let row = Char1List[i].rowStartData; row <= Char1List[i].rowEndData; row++) {
+                                                                    // Total & Found columns
+            for (let row = item.rowStartData; row <= item.rowEndData; row++) {
                 Cell[row][1].element.style.color = 'mediumvioletred';
                 Cell[row][1].element.style.fontWeight = 'bold';
                 Cell[row][2].element.style.fontWeight = 'bold';
             }
-            Cell[Char1List[i].rowFound][1].element.style.color = 'mediumvioletred';
-            Cell[Char1List[i].rowFound][1].element.style.fontWeight = 'bold';
-            Cell[Char1List[i].rowFound][2].element.style.fontWeight = 'bold';
+            Cell[item.rowFound][1].element.style.color = 'mediumvioletred';
+            Cell[item.rowFound][1].element.style.fontWeight = 'bold';
+            Cell[item.rowFound][2].element.style.fontWeight = 'bold';
                                                                     // center of table to gray
-            for (let row = Char1List[i].rowStartData; row <= Char1List[i].rowEndData; row++) {
+            for (let row = item.rowStartData; row <= item.rowEndData; row++) {
                 for (let col = ColStart; col <= ColEnd; col++) {
                     Cell[row][col].element.style.backgroundColor = "whitesmoke";
                 }
             }
-            row = Char1List[i].rowHeader - 2;
+            row = item.rowHeader - 2;
             for (let col = 0; col <= ColEnd; col++) {
                 Cell[row][col].element.style.borderBottom = "1px solid black";
             }
-        }
+        })
         for (let col = 0; col <= ColEnd; col++) {
             Cell[TableTotalRows - 1][col].element.style.borderBottom = "1px solid black";
         }
@@ -484,7 +486,10 @@ async function main() {
             }
             if (pangram) PangramsFound++;
         }
-        Char1List.forEach(item => {item.sums()});             // summate columns and rows
+        TablePtrs.forEach(item => {                         // update sums
+            item.sums();
+            item.found = Table[item.rowFound][2];
+        });             // summate columns and rows
         DisplayMetaStats();
         DisplayTable();
         return;
@@ -509,72 +514,56 @@ async function main() {
         for (let i = 0; i < TableTotalRows; i++) {
             for (let j = 0; j <= ColEnd; j++) Cell[i][j].element.innerText = Table[i][j];
         }
+
         // Gray out and hide completed rows and columns
-        Char1List.forEach(item => {
-            // check for completed rows
-            for (let row = item.rowStartData; row <= item.rowEndData; row++) {
-                if (Table[row][1] === Table[row][2]) {
-                    for (let col =0; col <= ColEnd; col++) {
+        TablePtrs.forEach(item => {
+            // check for completed section
+            if (item.found === item.total) {
+                for (let row = item.rowHeader - 2; row <= item.rowEndChar1; row++) {
+                    for (let col = 0; col <= ColEnd; col++) {
+                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                         Cell[row][col].element.style.color = "lightsteelblue";
-                        if (HideBlankCells) {
-                            Cell[row][col].element.setAttribute("hidden", "");
-                        } else {
-                            Cell[row][col].element.removeAttribute("hidden");
+                    }
+                }
+            } else {
+                // check for completed rows
+                for (let row = item.rowStartData; row <= item.rowEndData; row++) {
+                    if (Table[row][1] === Table[row][2]) {
+                        for (let col =0; col <= ColEnd; col++) {
+                            Cell[row][col].element.style.color = "lightsteelblue";
+                            HideBlankCells
+                                ? Cell[row][col].element.setAttribute("hidden", "")
+                                : Cell[row][col].element.removeAttribute("hidden");
+                        }
+                    }
+                }
+                // check for completed columns 
+                for (let col = ColStart; col <= ColEnd; col++) {
+                    if (Table[item.rowTotal][col] === Table[item.rowFound][col]) {
+                        for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
+                            Cell[row][col].element.style.color = "lightsteelblue";
+                            HideBlankCells
+                                ? Cell[row][col].element.setAttribute("hidden", "")
+                                : Cell[row][col].element.removeAttribute("hidden");
                         }
                     }
                 }
             }
-            // check for completed columns 
+            // check for empty column
             for (let col = ColStart; col <= ColEnd; col++) {
-                if (Table[item.rowTotal][col] === Table[item.rowFound][col]) {
-                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
-                        Cell[row][col].element.style.color = "lightsteelblue"; 
-                        if (HideBlankCells) {
-                            Cell[row][col].element.setAttribute("hidden", "");
-                        } else {
-                            Cell[row][col].element.removeAttribute("hidden");
-                        }
-                    }
-                }
-                // empty column
-                if (Table[item.rowTotal][col] === 0) {
-                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
+                if ((Table[item.rowTotal][col] === 0)) {
+                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++)
                         Cell[row][col].element.setAttribute("hidden", "");
-                    }
-                }
-            }
-            // remove/gray out section if Char1 complete
-            let row = item.rowFound;
-            if (Table[row][1] === Table[row][2]) {
-                for (let col =0; col <= ColEnd; col++) {
-                    Cell[row][col].element.style.color = "lightsteelblue";
-                    if (HideBlankCells) {
-                        Cell[row][col].element.setAttribute("hidden", "");
-                    } else {
-                        Cell[row][col].element.removeAttribute("hidden");
-                    }
-                }
-                for (let col = 1; col <= 3; col++) {
-                    Cell[item.rowTotal][col].element.style.color = "lightsteelblue";
-                    if (HideBlankCells) Cell[item.rowTotal][col].element.setAttribute("hidden", "");
                 }
             }
         });
-        // DEBUG: FIX rowFound EMPTY COLUMN ELIMINATION
-        Char1List.forEach(item => {
-            for (let col = ColStart; col <= ColEnd; col++) {
-                if (Table[item.rowTotal][col] === 0) {
-                    Cell[item.rowFound][col].element.setAttribute("hidden", "");
-                }
-            }
-        })
         return;
     }
 
     function ToggleHiddenCells () {
         HideBlankCells = HideBlankCells ? false : true; 
-        Char1List.forEach(item => {
-            if (item.total === Table[item.rowFound][2]) {         // No Char1
+        TablePtrs.forEach(item => {
+            if (item.total === item.found) {         // No Char1
                 for (let row = item.rowHeader - 2; row <= item.rowEndChar1; row++) {
                     for (let col = 0; col <= ColEnd; col++) 
                         HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
@@ -586,11 +575,6 @@ async function main() {
                         for (let col =0; col <= ColEnd; col++)
                             HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                     }
-                }
-                let roww = item.rowFound;
-                if (Table[roww][1] === Table[roww][2]) {
-                    for (let col =0; col <= ColEnd; col++)
-                        HideBlankCells ? Cell[roww][col].element.setAttribute("hidden", "") : Cell[roww][col].element.removeAttribute("hidden");
                 }
                 // toggle columns
                 for (let col = ColStart; col <= ColEnd; col++) {

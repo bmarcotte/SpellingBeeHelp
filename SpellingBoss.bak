@@ -13,8 +13,9 @@
     window.hiveLoaded = true;
 
     /* ----- Do not launch while on Welcome or Queen Bee pages ----- */
-    await waitForCondition(document.getElementById('js-hook-pz-moment__welcome'),
-        document.getElementById('js-hook-pz-moment__congrats'));
+    await waitForCondition(
+        document.getElementById('js-hook-pz-moment__welcome'),      // Welcome page
+        document.getElementById('js-hook-pz-moment__congrats'));    // Queen Bee page
     main();
 
     function waitForCondition(welcome, queenBee) {
@@ -40,8 +41,10 @@ async function main() {
     // MAIN CONSTANTS AND VARIABLES
     //--------------------------------------
 
-    // const devicePhone = detectPhoneDevice();    // true if device is phone
-    const devicePhone = false;    // true if device is phone
+    // System data
+    // const devicePhone = detectPhoneDevice();    // DEBUG: either should work
+    // const devicePhone = (window.orientation === 'undefined') ? false : true;
+    const devicePhone = false;
     const HintsHTML = await getHints();         // data from Spelling Bee page
     const hintDiv = setUpHintDiv();             // initialize DOM
 
@@ -51,7 +54,10 @@ async function main() {
         MetaStats3: document.getElementById('metastats3'),
         MetaStats4: document.getElementById('metastats4'),
         Table: document.getElementById('table0'),
+        TableHeader: document.getElementById('header'),
         HideBlankCells: document.getElementById('hideEmptyCells'),
+        // ShowRemaining: document.getElementById('showRemaining'),
+        // <br><input id="showRemaining" type="checkbox">Show number of words remaining</input>
         WordList: document.querySelector('.sb-wordlist-items-pag'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
         QueenBeePage: document.querySelector('.pz-moment__close'),
@@ -60,32 +66,36 @@ async function main() {
     // Table data
     let Char1Obj = {            // Char1List obj
         char1: '',
-        rowStart: 0,            // letter subtotals row in Table
-        rowEnd: 0,              // last data row in Table, not col totals
-        count: [],              // word length subtotals
+        rowHeader: 0,           // header row
+        rowTotal: 0,            // total words in each column
+        rowFound: 0,            // words found on each column
+        rowStartData: 0,        // letter subtotals (in gray)
+        rowEndData: 0,
+        rowEndChar1: 0,         // last line
         total: 0,               // total number of words
         sums() {
-            for (let j = ColStart - 2; j <= ColEnd; j++) {  // summate columns
-                if (j == ColStart - 1) continue;
+            for (let col = ColStart - 2; col <= ColEnd; col++) {  // summate columns
+                if (col == ColStart - 1) continue;
                 let sum = 0;
-                for (let i = this.rowStart + 1; i <= this.rowEnd; i++) {
-                    sum += Table[i][j];
+                for (let row = this.rowStartData; row <= this.rowEndData; row++) {
+                    sum += Table[row][col];
                 }
-                Table[this.rowEnd + 1][j] = sum;
+                Table[this.rowFound][col] = sum;
             }
-            for (let i = this.rowStart + 1; i <= this.rowEnd + 1; i++) {    //summate rows
+            for (let row = this.rowStartData; row <= this.rowEndData; row++) {    //summate rows
                 let sum = 0;
-                for (let j = ColStart; j <= ColEnd; j++) {
-                    sum += Table[i][j];
+                for (let col = ColStart; col <= ColEnd; col++) {
+                    sum += Table[row][col];
                 }
-                Table[i][2] = sum;
+                Table[row][2] = sum;
             }
+            let row = this.rowFound;
+            let sum = 0;
+            for (let col = ColStart; col <= ColEnd; col++) {
+                sum += Table[row][col];
+            }
+            Table[row][2] = sum;
         },
-    };
-    let Char2Obj = {            // Char2List obj
-        char2: '',
-        count: 0,               // count of each Char2
-        row: 0,                 // Table row
     };
     let Table = [];             // Main Table array
     let Cell = [];              // element references for Table
@@ -93,10 +103,9 @@ async function main() {
     let ColEnd = 0;
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
-    let HideBlankCells = false;
     let Char1List = [];         // Pointers into Table
-    let Char2List = [];
     let Char2Row = {};          // hash table: Char2 -> row
+    let HideBlankCells = false;
 
     // Metastats
     let WordsTotal = 0;
@@ -140,25 +149,25 @@ async function main() {
         const hints = await fetch(hintsUrl).then(response => response.text()).then(html => {
             const div = document.createElement('div');
             div.innerHTML = html;                                       // translates string to DOM
-            return div.querySelector('.interactive-body > div');        // . = css selector; # = id selector
+            return div.querySelector('.interactive-body > div');
         });
         return hints;
     }
 
     /* ----- Detect device ----- */
-    function detectPhoneDevice () {
-        if (navigator.userAgent.match(/Android/i)
-        || navigator.userAgent.match(/webOS/i)
-        || navigator.userAgent.match(/iPhone/i)
-        || navigator.userAgent.match(/iPad/i)
-        || navigator.userAgent.match(/iPod/i)
-        || navigator.userAgent.match(/BlackBerry/i)
-        || navigator.userAgent.match(/Windows Phone/i)) {
-           return true ;
-        } else {
-           return false ;
-        }
-     }
+    // function detectPhoneDevice () {
+    //     if (navigator.userAgent.match(/Android/i)
+    //     || navigator.userAgent.match(/webOS/i)
+    //     || navigator.userAgent.match(/iPhone/i)
+    //     || navigator.userAgent.match(/iPad/i)
+    //     || navigator.userAgent.match(/iPod/i)
+    //     || navigator.userAgent.match(/BlackBerry/i)
+    //     || navigator.userAgent.match(/Windows Phone/i)) {
+    //        return true ;
+    //     } else {
+    //        return false ;
+    //     }
+    //  }
 
     /* ----- Open Rankings pop-up for data ----- */
     async function getGeniusScore() {
@@ -167,20 +176,20 @@ async function main() {
         let score = element.querySelectorAll('li')[8].innerText.replace(/\D/g, '');        
         document.querySelector('.sb-modal-close').click();
         return score;
-    }
 
-    function waitForElement(selector) {
-        return new Promise(resolveElement => {
-            const checkForElement = () => {
-                let element = document.querySelector(selector);
-                if (element) {
-                    resolveElement(element);
-                } else {
-                    setTimeout(checkForElement, 10);
-                }
-            };
-            checkForElement();
-        });
+        function waitForElement(selector) {
+            return new Promise(resolveElement => {
+                const checkForElement = () => {
+                    let element = document.querySelector(selector);
+                    if (element) {
+                        resolveElement(element);
+                    } else {
+                        setTimeout(checkForElement, 10);
+                    }
+                };
+                checkForElement();
+            });
+        }
     }
 
     /* ----- Create DOM for our added HTML ----- */
@@ -203,14 +212,16 @@ async function main() {
 
         // Our added HTML
         hintDiv.innerHTML = `
+        <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
+        <br><table id="header"><tr><td>Σ = total words&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = words found</tr></td></table>
+        <table id="table0">
+        </table><br>
         <table>
             <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
             <td id="metastats2"></td>
             <td id="metastats3">Genius level:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
-        </table><table id="table0"></table><br>
-        <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
-        <br><br>Σ = total words&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = words found
+        </table>
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -243,12 +254,16 @@ async function main() {
                 font-family: Arial, Helvetica, sans-serif;
                 font-size: medium;
             }
+
             #table0 td {
                 height: 1ch;
                 width: 3ch;
                 margin-left: 5ch;
                 margin-right: 5ch;
                 text-align: center;
+            }
+            #header td {
+                padding-top: 4px;
             }
         </style>
         `;
@@ -275,7 +290,6 @@ async function main() {
             TotalPoints = temp[2];
             PangramsTotal = temp[3];
                 if (temp[4] > 0) PangramsTotal = PangramsTotal + ' (' + temp[4] + ' Perfect)';
-
          // char1Table (temporary data)
         let char1Table = [...HintsHTML.querySelectorAll('table tr')]
             .map(tr => [...tr.querySelectorAll('td')].map(x => x.textContent));  // ... convert iterable to array
@@ -320,7 +334,7 @@ async function main() {
             ColIndex[wordLengths[i - 4]] = i;
         }
 
-       // Char1List, Char2List, Char2Row, and Table (permanent data)
+       // Create Char1List, Char2Row, and Table (permanent data)
         GetCharLists(char1Table, char2Table, header, spacer);
 
         CreateHTMLTable();           
@@ -328,48 +342,61 @@ async function main() {
             return;
     }
 
-    // Permanent data: Char1List, Char2List, Char2Row, and Table
+    // Permanent data: Char1List, Char2Row, and Table
     function GetCharLists (char1Table, char2Table, header, spacer) {
+        let char2Obj = {                            // char2List obj
+            char2: '',
+            row: 0,
+        };
+        let char2List = [];
         let temp;
-        let ch2Indx = 0;                            // iterates through Char2List
+        let ch2Indx = 0;                            // iterates through char2List
         let chTableIndx = 0;                        // iterates through Char1List and char1Table/char2Table
         let row = 3;
         for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
+            Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
+            Char1List[chTableIndx].char1 = char1Table[chTableIndx][0];
+            Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
             Table.push(spacer);
             Table.push(spacer);
             Table.push(header);
-            Char1List[chTableIndx] = Object.assign({}, Char1Obj);   // Char1 line
-            Char1List[chTableIndx].char1 = char1Table[chTableIndx][0];
-            Char1List[chTableIndx].rowStart = row;
-            Char1List[chTableIndx].rowEnd = row + (char2Table[chTableIndx].length / 2);
-            Char1List[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
+            Char1List[chTableIndx].rowHeader = row - 1;
             temp = ['', 'Σ', '#', 'Σ>'];
             temp.length = ColEnd + 1;
-            for (let j = 4; j <=  ColEnd; j++) {                    // Char1 stats line
+            for (let j = 4; j <=  ColEnd; j++) {                    // Char1 stats line (rowTotal)
                 temp[j] = char1Table[chTableIndx][j - 3];
             }
             Table.push(temp);
+            Char1List[chTableIndx].rowTotal = row;
             row++;
+            Char1List[chTableIndx].rowStartData = row;
             for (let j = 0; j < char2Table[chTableIndx].length; j++) {  // Char2 lines
-                Char2List[ch2Indx] = Object.assign({}, Char2Obj);
-                Char2List[ch2Indx].row = row;
-                Char2List[ch2Indx].char2 = char2Table[chTableIndx][j];
+                char2List[ch2Indx] = Object.assign({}, char2Obj);
+                char2List[ch2Indx].row = row;
+                char2List[ch2Indx].char2 = char2Table[chTableIndx][j];
                 j++;
-                Char2List[ch2Indx].count = char2Table[chTableIndx][j];
-                temp = [Char2List[ch2Indx].char2, Char2List[ch2Indx].count, 0, ''];
+                temp = [char2List[ch2Indx].char2, char2Table[chTableIndx][j], 0, '#>'];
                 Table.push(temp);
                 ch2Indx++;
                 row++;
             }
-            temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];
+            Char1List[chTableIndx].rowEndData = row -1;
+            temp = ['Σ', Char1List[chTableIndx].total, 0, '#>'];    // Char1List.rowFound
             temp.length = ColEnd + 1;
             Table.push(temp);
+            Char1List[chTableIndx].rowFound = row;
+            Char1List[i].rowEndChar1 = row;
+            for (let row = Char1List[i].rowStartData; row <= Char1List[i].rowEndData; row++) {
+                for (let col = ColStart; col <= ColEnd; col++) {    // zero out tally area
+                    Table[row][col] = 0;
+                }
+            }
             row +=4;
             chTableIndx++;
         }
-        Char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
-        TableTotalRows = Char2List.length + (Char1List.length * 5);
-        zeroOutCounts();
+        Table.push(spacer);
+        char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
+        TableTotalRows = char2List.length + (Char1List.length * 5) + 1;
         return;
     }
 
@@ -385,33 +412,45 @@ async function main() {
             Cell.push(rowObj);
             El.Table.appendChild(rowEl);
         }
-        for (let i = 0; i < Char1List.length; i++) {    // cell colors
-            for (let j = ColStart; j <= ColEnd; j++) {
-                let row = Char1List[i].rowStart;
-                Cell[row][j].element.style.color = 'mediumvioletred';
-                Cell[row][j].element.style.fontWeight = 'bold';
+        // Cell colors
+        let row;
+        for (let i = 0; i < Char1List.length; i++) {
+            row = Char1List[i].rowTotal;
+            for (let col = ColStart; col <= ColEnd; col++) {        // Total words
+                Cell[row][col].element.style.color = 'mediumvioletred';
+                Cell[row][col].element.style.fontWeight = 'bold';
             }
-            for (let j = ColStart; j <= ColEnd; j++) {
-                Cell[Char1List[i].rowEnd + 1][j].element.style.fontWeight = 'bold';
+            row = Char1List[i].rowFound;
+            for (let col = ColStart; col <= ColEnd; col++) {        // Found words
+                Cell[row][col].element.style.fontWeight = 'bold';
             }
-            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd + 1; j++) {
-                Cell[j][1].element.style.color = 'mediumvioletred';
-                Cell[j][1].element.style.fontWeight = 'bold';
-                Cell[j][2].element.style.fontWeight = 'bold';
+                                                                    // Column data
+            for (let row = Char1List[i].rowStartData; row <= Char1List[i].rowEndData; row++) {
+                Cell[row][1].element.style.color = 'mediumvioletred';
+                Cell[row][1].element.style.fontWeight = 'bold';
+                Cell[row][2].element.style.fontWeight = 'bold';
             }
-            for (let j = Char1List[i].rowStart + 1; j <= Char1List[i].rowEnd; j++) {
-                for (let k = ColStart; k <= ColEnd; k++) {
-                    Cell[j][k].element.style.backgroundColor = "whitesmoke";
+            Cell[Char1List[i].rowFound][1].element.style.color = 'mediumvioletred';
+            Cell[Char1List[i].rowFound][1].element.style.fontWeight = 'bold';
+            Cell[Char1List[i].rowFound][2].element.style.fontWeight = 'bold';
+                                                                    // center of table to gray
+            for (let row = Char1List[i].rowStartData; row <= Char1List[i].rowEndData; row++) {
+                for (let col = ColStart; col <= ColEnd; col++) {
+                    Cell[row][col].element.style.backgroundColor = "whitesmoke";
                 }
             }
-            for (let j = 0; j <= ColEnd; j++) {
-                let row = Char1List[i].rowStart - 3;
-                Cell[row][j].element.style.borderBottom = "1px solid black";
+            row = Char1List[i].rowHeader - 2;
+            for (let col = 0; col <= ColEnd; col++) {
+                Cell[row][col].element.style.borderBottom = "1px solid black";
             }
+        }
+        for (let col = 0; col <= ColEnd; col++) {
+            Cell[TableTotalRows - 1][col].element.style.borderBottom = "1px solid black";
         }
         return;
     }
- //======================================
+
+//======================================
 // MAIN SUPPORTING FUNCTION:  UPDATE TABLES FROM FOUND WORDS
 //======================================
 
@@ -451,17 +490,6 @@ async function main() {
         return;
     }
     
-    function zeroOutCounts() {
-        Char1List.forEach(item => {
-            for (let row = item.rowStart + 1; row <= item.rowEnd; row++) {
-                for (let col = ColStart; col <= ColEnd; col++) {
-                    Table[row][col] = 0;
-                }
-            }
-        });
-        return;
-    }
-
 //======================================
 // DISPLAY FUNCTIONS
 //======================================
@@ -481,76 +509,99 @@ async function main() {
         for (let i = 0; i < TableTotalRows; i++) {
             for (let j = 0; j <= ColEnd; j++) Cell[i][j].element.innerText = Table[i][j];
         }
-
-        // Display helpful "0"s by filtering out unhelpful "0"s into "".
-        Char1List.forEach(item => {
-            for (let col = ColStart; col <= ColEnd; col ++) {
-                if (Table[item.rowStart][col] == 0) {
-                    for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++)
-                        Cell[row][col].element.innerText = '';
-                }
-            }
-        });
-
         // Gray out and hide completed rows and columns
         Char1List.forEach(item => {
-            if (item.total === Table[item.rowEnd + 1][2]) {         // No Char1 -> do the entire section
-                for (let row = item.rowStart - 3; row <= item.rowEnd + 1; row++) {
-                    for (let col = 0; col <= ColEnd; col++) {
+            // check for completed rows
+            for (let row = item.rowStartData; row <= item.rowEndData; row++) {
+                if (Table[row][1] === Table[row][2]) {
+                    for (let col =0; col <= ColEnd; col++) {
                         Cell[row][col].element.style.color = "lightsteelblue";
-                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
-                    }
-                }
-                } else {                                            // otherwise check for individual rows and columns
-                // check for completed rows
-                for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
-                    if (Table[row][1] === Table[row][2]) {
-                        for (let col =0; col <= ColEnd; col++) {
-                            Cell[row][col].element.style.color = "lightsteelblue";
-                            if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
-                        }
-                    }
-                }
-                // check for completed columns
-                for (let col = ColStart; col <= ColEnd; col++) {
-                    if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
-                        for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++) {
-                            Cell[row][col].element.style.color = "lightsteelblue";
-                            if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                        if (HideBlankCells) {
+                            Cell[row][col].element.setAttribute("hidden", "");
+                        } else {
+                            Cell[row][col].element.removeAttribute("hidden");
                         }
                     }
                 }
             }
+            // check for completed columns 
+            for (let col = ColStart; col <= ColEnd; col++) {
+                if (Table[item.rowTotal][col] === Table[item.rowFound][col]) {
+                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
+                        Cell[row][col].element.style.color = "lightsteelblue"; 
+                        if (HideBlankCells) {
+                            Cell[row][col].element.setAttribute("hidden", "");
+                        } else {
+                            Cell[row][col].element.removeAttribute("hidden");
+                        }
+                    }
+                }
+                // empty column
+                if (Table[item.rowTotal][col] === 0) {
+                    for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
+                        Cell[row][col].element.setAttribute("hidden", "");
+                    }
+                }
+            }
+            // remove/gray out section if Char1 complete
+            let row = item.rowFound;
+            if (Table[row][1] === Table[row][2]) {
+                for (let col =0; col <= ColEnd; col++) {
+                    Cell[row][col].element.style.color = "lightsteelblue";
+                    if (HideBlankCells) {
+                        Cell[row][col].element.setAttribute("hidden", "");
+                    } else {
+                        Cell[row][col].element.removeAttribute("hidden");
+                    }
+                }
+                for (let col = 1; col <= 3; col++) {
+                    Cell[item.rowTotal][col].element.style.color = "lightsteelblue";
+                    if (HideBlankCells) Cell[item.rowTotal][col].element.setAttribute("hidden", "");
+                }
+            }
         });
-
+        // DEBUG: FIX rowFound EMPTY COLUMN ELIMINATION
+        Char1List.forEach(item => {
+            for (let col = ColStart; col <= ColEnd; col++) {
+                if (Table[item.rowTotal][col] === 0) {
+                    Cell[item.rowFound][col].element.setAttribute("hidden", "");
+                }
+            }
+        })
         return;
     }
 
     function ToggleHiddenCells () {
         HideBlankCells = HideBlankCells ? false : true; 
         Char1List.forEach(item => {
-            if (item.total === Table[item.rowEnd + 1][2]) {         // No Char1
-                for (let row = item.rowStart - 3; row <= item.rowEnd + 1; row++) {
+            if (item.total === Table[item.rowFound][2]) {         // No Char1
+                for (let row = item.rowHeader - 2; row <= item.rowEndChar1; row++) {
                     for (let col = 0; col <= ColEnd; col++) 
                         HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                 }
             } else {        // otherwise check for individual rows and columns
                 // toggle rows
-                for (let row = item.rowStart + 1; row <= item.rowEnd + 1; row++) {
+                for (let row = item.rowStartData; row <= item.rowEndData; row++) {
                     if (Table[row][1] === Table[row][2]) {
                         for (let col =0; col <= ColEnd; col++)
                             HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                     }
                 }
+                let roww = item.rowFound;
+                if (Table[roww][1] === Table[roww][2]) {
+                    for (let col =0; col <= ColEnd; col++)
+                        HideBlankCells ? Cell[roww][col].element.setAttribute("hidden", "") : Cell[roww][col].element.removeAttribute("hidden");
+                }
                 // toggle columns
                 for (let col = ColStart; col <= ColEnd; col++) {
-                    if (Table[item.rowStart][col] === Table[item.rowEnd + 1][col]) {
-                        for (let row = item.rowStart - 1; row <= item.rowEnd + 1; row++)
+                    if (Table[item.rowFound][col] === Table[item.rowTotal][col]) {
+                        for (let row = item.rowHeader; row <= item.rowEndChar1; row++)
                             HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                     }
                 }
             }
         });
+        DisplayTable();
         return;
     }
 
