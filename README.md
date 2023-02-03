@@ -20,13 +20,16 @@ while on the Spelling Bee web page.
 		</dt>
 
 	- In Chrome and Edge:  CTL-D, then [More].
-	- Paste the copied text into the URL box.
-		Name: Bee Hive (or whatever)<br>
-		URL: paste the copied text here
+	- Paste the copied text into the URL box.<br>
+			<li>Name: Bee Hive (or whatever)</li>
+			<li>URL: paste the copied text here</li>
 
 2.  To use:
 
 	- Launch Spelling Bee ('https://www.nytimes.com/puzzles/spelling-bee').
 	- Click the Bee Hive bookmarklet on your Bookmarks bar.
 
-This should ease the task of tallying your entries!
+This should ease the task of tallying your entries!<br><br>
+
+Happy Hiving!<br>
+postDoc71 (ie retired pediatrician as of age 71)
