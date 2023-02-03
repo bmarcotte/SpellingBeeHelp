@@ -56,8 +56,8 @@ async function main() {
         Table: document.getElementById('table0'),
         TableHeader: document.getElementById('header'),
         HideBlankCells: document.getElementById('hideEmptyCells'),
-        // ShowRemaining: document.getElementById('showRemaining'),
-        // <br><input id="showRemaining" type="checkbox">Show number of words remaining</input>
+        ShowRemaining: document.getElementById('showRemaining'),
+        Legend: document.getElementById('legend'),
         WordList: document.querySelector('.sb-wordlist-items-pag'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
         QueenBeePage: document.querySelector('.pz-moment__close'),
@@ -105,7 +105,8 @@ async function main() {
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
     let Cell = [];              // element references for Table
-    let HideBlankCells = false;
+    let HideBlankCells = true;
+    let ShowRemaining = false;
 
     // Metastats
     let WordsTotal = 0;
@@ -135,6 +136,9 @@ async function main() {
 
     /* ----- Toggle hiding blank cells ----- */
     El.HideBlankCells.addEventListener('click', ToggleHiddenCells);
+
+    /* ----- Toggle remaining vs found words ----- */
+    El.ShowRemaining.addEventListener('click', ToggleFoundRemaining);
 
 //======================================
 // GET SYSTEM DATA
@@ -212,19 +216,21 @@ async function main() {
 
         // Our added HTML
         hintDiv.innerHTML = `
-        <input id="hideEmptyCells" type="checkbox">Hide empty data cells</input>
-        <br><table id="header"><tr>
-            <td>Σ = <font color="mediumvioletred"><b>total words</b>
-            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words found</b></td>
-            </tr></table>
-        <table id="table0">
-        </table><br>
         <table>
             <td id="metastats1">Total points:&nbsp<br>Total words:&nbsp<br>Words Found:&nbsp</td>
             <td id="metastats2"></td>
             <td id="metastats3">Genius level:&nbsp<br>Total pangrams:&nbsp<br>Pangrams Found:&nbsp</td>
             <td id="metastats4"></td>
         </table>
+        <br><table id="header"><tr>
+            <td id="legend">Σ = <font color="mediumvioletred"><b>TOTAL words</b>
+            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b></td>
+            </tr></table>
+        <table id="table0">
+        </table><br>
+        <input id="hideEmptyCells" type="checkbox">&nbspShow empty data cells</input>
+        <br><input id="showRemaining" type="checkbox">&nbspShow number of words remaining</input>
+        <br><br>Bee Hive Release 1.11
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -264,12 +270,14 @@ async function main() {
                 margin-left: 5ch;
                 margin-right: 5ch;
                 text-align: center;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 90%;
             }
             #header td {
-                padding-top: 4px;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 90%;
             }
-        </style>
-        `;
+       `;
         return hintDiv;
     }
 
@@ -337,68 +345,70 @@ async function main() {
             ColIndex[wordLengths[i - 4]] = i;
         }
 
-       // Create TablePtrs, Char2Row, and Table (permanent data)
-        GetCharLists(char1Table, char2Table, header, spacer);
+       // Create Table, TablePtrs, Char2Row (permanent data)
+        CreateTableData(char1Table, char2Table, header, spacer);
 
         CreateHTMLTable();           
         UpdateList();
             return;
     }
 
-    // Permanent data: TablePtrs, Char2Row, and Table
-    function GetCharLists (char1Table, char2Table, header, spacer) {
-        let char2Obj = {                            // char2List obj
-            char2: '',
-            row: 0,
-        };
-        let char2List = [];
+    // Permanent data: Table, TablePtrs, Char2Row 
+    function CreateTableData (char1Table, char2Table, header, spacer) {
         let temp;
-        let ch2Indx = 0;                            // iterates through char2List
-        let chTableIndx = 0;                        // iterates through TablePtrs and char1Table/char2Table
+        let ch2Tally = 0;           // tally Char2 rows
+        let indx = 0;               // iterates through TablePtrs and char1Table/char2Table
         let row = 3;
         for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
-            TablePtrs[chTableIndx] = Object.assign({}, tblPtrObj);   // Char1 line
-            TablePtrs[chTableIndx].total = Number(char1Table[chTableIndx][char1Table[chTableIndx].length - 1]);
+            TablePtrs[indx] = Object.assign({}, tblPtrObj);   // Spacers and header
+            TablePtrs[indx].total = Number(char1Table[indx][char1Table[indx].length - 1]);
             Table.push(spacer);
             Table.push(spacer);
             Table.push(header);
-            TablePtrs[chTableIndx].rowHeader = row - 1;
-            temp = ['', 'Σ', '#', 'Σ>'];
+            TablePtrs[indx].rowHeader = row - 1;
+
+            temp = ['', 'Σ', '#', 'Σ>'];                      // Section stats line (rowTotal)
             temp.length = ColEnd + 1;
-            for (let j = 4; j <=  ColEnd; j++) {                    // Char1 stats line (rowTotal)
-                temp[j] = char1Table[chTableIndx][j - 3];
+            for (let j = 4; j <=  ColEnd; j++) {
+                temp[j] = char1Table[indx][j - 3];
             }
             Table.push(temp);
-            TablePtrs[chTableIndx].rowTotal = row;
+            TablePtrs[indx].rowTotal = row;
             row++;
-            TablePtrs[chTableIndx].rowStartData = row;
-            for (let j = 0; j < char2Table[chTableIndx].length; j++) {  // Char2 lines
-                char2List[ch2Indx] = Object.assign({}, char2Obj);
-                char2List[ch2Indx].row = row;
-                char2List[ch2Indx].char2 = char2Table[chTableIndx][j];
-                j++;
-                temp = [char2List[ch2Indx].char2, char2Table[chTableIndx][j], 0, '#>'];
-                Table.push(temp);
-                ch2Indx++;
-                row++;
-            }
-            TablePtrs[chTableIndx].rowEndData = row -1;
-            temp = ['Σ', TablePtrs[chTableIndx].total, 0, '#>'];    // TablePtrs.rowFound
+
+            temp = ['Σ', TablePtrs[indx].total, 0, '#>'];    // TablePtrs.rowFound
             temp.length = ColEnd + 1;
             Table.push(temp);
-            TablePtrs[chTableIndx].rowFound = row;
-            TablePtrs[i].rowEndChar1 = row;
+            TablePtrs[indx].rowFound = row;
+            row++;
+
+            TablePtrs[indx].rowStartData = row;              // Char2 lines
+            for (let j = 0; j < char2Table[indx].length; j++) {
+                Char2Row[char2Table[indx][j]] = row;
+                temp = [char2Table[indx][j], char2Table[indx][j + 1], 0, '#>'];
+                Table.push(temp);
+                ch2Tally++;
+                row++;
+                j++;
+            }
+            TablePtrs[indx].rowEndData = row -1;
+
+            TablePtrs[i].rowEndChar1 = row - 1;             // end of section
+
+            // zero out tally area
             for (let row = TablePtrs[i].rowStartData; row <= TablePtrs[i].rowEndData; row++) {
-                for (let col = ColStart; col <= ColEnd; col++) {    // zero out tally area
+                for (let col = ColStart; col <= ColEnd; col++) {
                     Table[row][col] = 0;
                 }
             }
-            row +=4;
-            chTableIndx++;
+
+            row +=3;
+            indx++;
         }
-        Table.push(spacer);
-        char2List.forEach(item => Char2Row[item.char2] = item.row); // hash table: Char2 -> Row
-        TableTotalRows = char2List.length + (TablePtrs.length * 5) + 1;
+
+        Table.push(spacer);         // terminal line
+
+        TableTotalRows = ch2Tally + (TablePtrs.length * 5) + 1;
         return;
     }
 
@@ -517,12 +527,17 @@ async function main() {
 
         // Gray out and hide completed rows and columns
         TablePtrs.forEach(item => {
+            for (let col = ColStart; col <= ColEnd; col++) {
+                for (let row = item.rowStartData; row <= item.rowEndData; row++)
+                    Cell[row][col].element.removeAttribute("hidden", "");
+            }
+
             // check for completed section
-            if (item.found === item.total) {
+            if ((item.found === item.total) && (!Cell[item.rowHeader][0].element.hasAttribute("hidden"))) {
                 for (let row = item.rowHeader - 2; row <= item.rowEndChar1; row++) {
                     for (let col = 0; col <= ColEnd; col++) {
-                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                         Cell[row][col].element.style.color = "lightsteelblue";
+                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                     }
                 }
             } else {
@@ -549,14 +564,27 @@ async function main() {
                     }
                 }
             }
-            // check for empty column
+            // check for empty columns
             for (let col = ColStart; col <= ColEnd; col++) {
                 if ((Table[item.rowTotal][col] === 0)) {
                     for (let row = item.rowHeader; row <= item.rowEndChar1; row++)
-                        Cell[row][col].element.setAttribute("hidden", "");
+                    Cell[row][col].element.setAttribute("hidden", "");
                 }
             }
+            // Display FOUND vs REMAINING words
+            if (ShowRemaining) {
+                for (let col = ColStart; col <= ColEnd; col++) {
+                    for (let row = item.rowStartData; row <= item.rowEndData; row++)
+                        Cell[row][col].element.setAttribute("hidden", "");
+                }
+                for (let col = ColStart; col <= ColEnd; col++)
+                    Cell[item.rowFound][col].element.innerText = Table[item.rowTotal][col] - Table[item.rowFound][col];
+                for (let row = item.rowStartData; row <= item.rowEndData; row++)
+                    Cell[row][2].element.innerText = Table[row][1] - Table[row][2];
+                Cell[item.rowFound][2].element.innerText = Table[item.rowFound][1] - Table[item.rowFound][2];
+            }
         });
+    
         return;
     }
 
@@ -586,6 +614,19 @@ async function main() {
             }
         });
         DisplayTable();
+        return;
+    }
+
+    function ToggleFoundRemaining () {
+        ShowRemaining = ShowRemaining ? false : true;
+        if (ShowRemaining) {
+            El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b>TOTAL words</b>
+            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <strong><b>words REMAINING</b></strong>`;
+        } else {
+            El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b><strong>TOTAL</strong> words</b>
+            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b>`;
+        }
+        DisplayTable ();
         return;
     }
 
