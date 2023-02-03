@@ -9,7 +9,7 @@ while on the Spelling Bee web page.
 
 
 1.  From Bookmark manager, create a new boookmark.	
-	- Copy the block of text below:
+	<li>Copy the block of text below:</li>
 
         <dt><table id="bookmarklet" word-wrap="normal"><tr>
 		<td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') 
@@ -19,10 +19,10 @@ while on the Spelling Bee web page.
 		</tr></table>
 		</dt>
 
-	- In Chrome and Edge:  CTL-D, then [More].
+	<li>In Chrome and Edge:  CTL-D, then [More].
 	- Paste the copied text into the URL box.<br>
-			Name: Bee Hive (or whatever)
-			URL: paste the copied text here
+			<li>Name: Bee Hive (or whatever)</li>
+			<li>URL: paste the copied text here</li></li>
 
 2.  To use:
 
