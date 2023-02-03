@@ -9,7 +9,7 @@ while on the Spelling Bee web page.
 
 
 1.  From Bookmark manager, create a new boookmark.	
-	<li>Copy the block of text below:</li>
+	- Copy the block of text below: 
 
         <dt><table id="bookmarklet" word-wrap="normal"><tr>
 		<td><pre> javascript:if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') 
@@ -19,10 +19,10 @@ while on the Spelling Bee web page.
 		</tr></table>
 		</dt>
 
-	<li>In Chrome and Edge:  CTL-D, then [More].
+	- In Chrome and Edge:  CTL-D, then [More].
 	- Paste the copied text into the URL box.<br>
-			<li>Name: Bee Hive (or whatever)</li>
-			<li>URL: paste the copied text here</li></li>
+				Name: Bee Hive (or whatever)<br>
+				URL: paste the copied text here 
 
 2.  To use:
 
@@ -30,6 +30,7 @@ while on the Spelling Bee web page.
 	- Click the Bee Hive bookmarklet on your Bookmarks bar.
 
 This should ease the task of tallying your entries!<br>
+
 
 Happy Hiving!<br>
 postDoc71 (ie retired pediatrician as of age 71)
