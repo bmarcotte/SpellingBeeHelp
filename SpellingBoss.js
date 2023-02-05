@@ -41,23 +41,30 @@ async function main() {
     // MAIN CONSTANTS AND VARIABLES
     //--------------------------------------
 
-    // System data
-    // const devicePhone = detectPhoneDevice();    // DEBUG: either should work
+    /* ----- System data ----- */
+    const devicePhone = detectPhoneDevice();    // DEBUG: either should work, but w--.or-- will lose support
     // const devicePhone = (window.orientation === 'undefined') ? false : true;
-    const devicePhone = false;
     const HintsHTML = await getHints();         // data from Spelling Bee page
     const hintDiv = setUpHintDiv();             // initialize DOM
+    let HTMLTableCreated = false;               // to prevent rerendering Table twice
+    // Settings
+    let ShowBlankCells = false;                 // toggle: show/hide empty data cells           
+    let ShowRemaining = false;                  // toggle: show remaining vs found words
+    let SubTotalsAtTop = false;                 // toggle: placement of subtotal line
+    let SaveSetting = false;                    // toggle: save above in cookie
 
     const El = {
         MetaStats1: document.getElementById('metastats1'),
         MetaStats2: document.getElementById('metastats2'),
         MetaStats3: document.getElementById('metastats3'),
         MetaStats4: document.getElementById('metastats4'),
+        Legend: document.getElementById('legend'),
         Table: document.getElementById('table0'),
         TableHeader: document.getElementById('header'),
-        HideBlankCells: document.getElementById('hideEmptyCells'),
+        ShowBlankCells: document.getElementById('hideEmptyCells'),
         ShowRemaining: document.getElementById('showRemaining'),
-        Legend: document.getElementById('legend'),
+        SubTotalsAtTop: document.getElementById('subTotalsAtTop'),
+        SaveSettings: document.getElementById('saveSettings'),
         WordList: document.querySelector('.sb-wordlist-items-pag'),
         OpeningPage: document.querySelector('.pz-moment__button.primary'),
         QueenBeePage: document.querySelector('.pz-moment__close'),
@@ -105,8 +112,6 @@ async function main() {
     let ColIndex = [0, 0, 0, 3];
     let TableTotalRows = 0;
     let Cell = [];              // element references for Table
-    let HideBlankCells = true;
-    let ShowRemaining = false;
 
     // Metastats
     let WordsTotal = 0;
@@ -124,6 +129,9 @@ async function main() {
     // MAIN PROGRAM
     // -------------------------------------
 
+    /* ----- Retrieve saved settings ----- */
+    RetrieveSavedSettings ();
+    
     /* ----- Insert our HTML and data into Spelling Bee ----- */
     InitializeHints ();
 
@@ -135,10 +143,17 @@ async function main() {
     observer.observe(El.WordList, {childList: true});
 
     /* ----- Toggle hiding blank cells ----- */
-    El.HideBlankCells.addEventListener('click', ToggleHiddenCells);
+    El.ShowBlankCells.addEventListener('click', ToggleHiddenCells);
 
     /* ----- Toggle remaining vs found words ----- */
     El.ShowRemaining.addEventListener('click', ToggleFoundRemaining);
+
+
+    /* ----- Toggle placement of subtotal line ----- */
+    El.SubTotalsAtTop.addEventListener('click', ToggleSubtotals);
+
+    /* ----- Save settings ----- */
+    El.SaveSettings.addEventListener('click', SaveSettings);
 
 //======================================
 // GET SYSTEM DATA
@@ -159,19 +174,20 @@ async function main() {
     }
 
     /* ----- Detect device ----- */
-    // function detectPhoneDevice () {
-    //     if (navigator.userAgent.match(/Android/i)
-    //     || navigator.userAgent.match(/webOS/i)
-    //     || navigator.userAgent.match(/iPhone/i)
-    //     || navigator.userAgent.match(/iPad/i)
-    //     || navigator.userAgent.match(/iPod/i)
-    //     || navigator.userAgent.match(/BlackBerry/i)
-    //     || navigator.userAgent.match(/Windows Phone/i)) {
-    //        return true ;
-    //     } else {
-    //        return false ;
-    //     }
-    //  }
+    function detectPhoneDevice () {
+        return false;
+        if (navigator.userAgent.match(/Android/i)
+        || navigator.userAgent.match(/webOS/i)
+        || navigator.userAgent.match(/iPhone/i)
+        || navigator.userAgent.match(/iPad/i)
+        || navigator.userAgent.match(/iPod/i)
+        || navigator.userAgent.match(/BlackBerry/i)
+        || navigator.userAgent.match(/Windows Phone/i)) {
+           return true ;
+        } else {
+           return false ;
+        }
+     }
 
     /* ----- Open Rankings pop-up for data ----- */
     async function getGeniusScore() {
@@ -227,9 +243,10 @@ async function main() {
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b></td>
             </tr></table>
         <table id="table0">
-        </table><br>
-        <input id="hideEmptyCells" type="checkbox">&nbspShow empty data cells</input>
+        </table>
+        <br><input id="hideEmptyCells" type="checkbox">&nbspShow empty data cells</input>
         <br><input id="showRemaining" type="checkbox">&nbspShow number of words remaining</input>
+        <br><input id="saveSettings" type="checkbox">&nbspSave above settings</input>
         <br><br>Bee Hive Release 1.11
         <style>
             #metastats1 {
@@ -279,6 +296,61 @@ async function main() {
             }
        `;
         return hintDiv;
+    }
+    /* <br><input hidden id="subTotalsAtTop" type="checkbox">&nbspPlace subtotal line above letter line</input> */
+    
+    /* ----- Saved Settings Cookie ----- */
+    function RetrieveSavedSettings () {
+        let setting = getCookie("beehiveSetting");
+        if (setting === "true") { 
+            let blank = getCookie("beehiveBlank");
+            let remain = getCookie("beehiveRemaining");
+            let subTot = getCookie("beehiveSubtotal");
+            El.SaveSettings.click();
+            SaveSettings();
+            if (blank === "true") {
+                El.ShowBlankCells.click();
+                ToggleHiddenCells();
+            } else {
+                setCookie("beehiveBlank=false");
+            }
+            if (remain === "true") {
+                El.ShowRemaining.click();
+                ToggleFoundRemaining();
+            } else {
+                setCookie("beehiveRemaining=false");
+            }
+            if (subTot === "true") {
+                El.SubTotalsAtTop.click();
+                SubTotalsAtTop = true;
+            } else {
+                setCookie("beehiveSubtotal=false");
+            }
+         } else {
+            setCookie("beehiveBlank=false");
+            setCookie("beehiveRemaining=false");
+            setCookie("beehiveSubtotal=false");
+            setCookie("beehiveSetting=false");
+         }
+        return;
+    }
+
+    function SaveSettings () {
+        SaveSetting = SaveSetting ? false : true;
+        SaveSetting ? setCookie("beehiveSetting=true") : setCookie("beehiveSetting=false");
+        return;
+    }
+
+    function setCookie (name) {
+        document.cookie = name + "; max-age=5000";
+        return;
+    }
+
+    function getCookie(name) {
+        let matches = document.cookie.match(new RegExp(
+          "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+        ));
+        return matches ? decodeURIComponent(matches[1]) : undefined;
     }
 
 //======================================
@@ -348,9 +420,14 @@ async function main() {
        // Create Table, TablePtrs, Char2Row (permanent data)
         CreateTableData(char1Table, char2Table, header, spacer);
 
-        CreateHTMLTable();           
+        if (!HTMLTableCreated) {
+            CreateHTMLTable();
+        } else {
+            SetCellColors();
+        }   
+        HTMLTableCreated = true;
         UpdateList();
-            return;
+        return;
     }
 
     // Permanent data: Table, TablePtrs, Char2Row 
@@ -376,11 +453,13 @@ async function main() {
             TablePtrs[indx].rowTotal = row;
             row++;
 
-            temp = ['Σ', TablePtrs[indx].total, 0, '#>'];    // TablePtrs.rowFound
-            temp.length = ColEnd + 1;
-            Table.push(temp);
-            TablePtrs[indx].rowFound = row;
-            row++;
+            if (SubTotalsAtTop) {
+                temp = ['Σ', TablePtrs[indx].total, 0, '#>'];    // TablePtrs.rowFound
+                temp.length = ColEnd + 1;
+                Table.push(temp);
+                TablePtrs[indx].rowFound = row;
+                row++;
+            }
 
             TablePtrs[indx].rowStartData = row;              // Char2 lines
             for (let j = 0; j < char2Table[indx].length; j++) {
@@ -392,6 +471,14 @@ async function main() {
                 j++;
             }
             TablePtrs[indx].rowEndData = row -1;
+
+            if (!SubTotalsAtTop) {
+                temp = ['Σ', TablePtrs[indx].total, 0, '#>'];    // TablePtrs.rowFound
+                temp.length = ColEnd + 1;
+                Table.push(temp);
+                TablePtrs[indx].rowFound = row;
+                row++;
+            }
 
             TablePtrs[i].rowEndChar1 = row - 1;             // end of section
 
@@ -424,7 +511,11 @@ async function main() {
             Cell.push(rowObj);
             El.Table.appendChild(rowEl);
         }
-        // Cell colors
+        SetCellColors();
+        return;
+    }
+    
+    function SetCellColors() {
         let row;
         TablePtrs.forEach(item => {
             row = item.rowTotal;
@@ -537,7 +628,7 @@ async function main() {
                 for (let row = item.rowHeader - 2; row <= item.rowEndChar1; row++) {
                     for (let col = 0; col <= ColEnd; col++) {
                         Cell[row][col].element.style.color = "lightsteelblue";
-                        if (HideBlankCells) Cell[row][col].element.setAttribute("hidden", "");
+                        if (!ShowBlankCells) Cell[row][col].element.setAttribute("hidden", "");
                     }
                 }
             } else {
@@ -546,9 +637,9 @@ async function main() {
                     if (Table[row][1] === Table[row][2]) {
                         for (let col =0; col <= ColEnd; col++) {
                             Cell[row][col].element.style.color = "lightsteelblue";
-                            HideBlankCells
-                                ? Cell[row][col].element.setAttribute("hidden", "")
-                                : Cell[row][col].element.removeAttribute("hidden");
+                            ShowBlankCells
+                                ? Cell[row][col].element.removeAttribute("hidden")
+                                : Cell[row][col].element.setAttribute("hidden", "");
                         }
                     }
                 }
@@ -557,10 +648,10 @@ async function main() {
                     if (Table[item.rowTotal][col] === Table[item.rowFound][col]) {
                         for (let row = item.rowHeader; row <= item.rowEndChar1; row++) {
                             Cell[row][col].element.style.color = "lightsteelblue";
-                            HideBlankCells
-                                ? Cell[row][col].element.setAttribute("hidden", "")
-                                : Cell[row][col].element.removeAttribute("hidden");
-                        }
+                            ShowBlankCells
+                                ? Cell[row][col].element.removeAttribute("hidden")
+                                : Cell[row][col].element.setAttribute("hidden", "");
+                    }
                     }
                 }
             }
@@ -589,26 +680,27 @@ async function main() {
     }
 
     function ToggleHiddenCells () {
-        HideBlankCells = HideBlankCells ? false : true; 
+        ShowBlankCells = ShowBlankCells ? false : true; 
+        ShowBlankCells ? setCookie("beehiveBlank=true") : setCookie("beehiveBlank=false");
         TablePtrs.forEach(item => {
             if (item.total === item.found) {         // No Char1
                 for (let row = item.rowHeader - 2; row <= item.rowEndChar1; row++) {
                     for (let col = 0; col <= ColEnd; col++) 
-                        HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
+                        ShowBlankCells ? Cell[row][col].element.removeAttribute("hidden") : Cell[row][col].element.setAttribute("hidden", "");
                 }
             } else {        // otherwise check for individual rows and columns
                 // toggle rows
                 for (let row = item.rowStartData; row <= item.rowEndData; row++) {
                     if (Table[row][1] === Table[row][2]) {
                         for (let col =0; col <= ColEnd; col++)
-                            HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
+                            ShowBlankCells ? Cell[row][col].element.removeAttribute("hidden") : Cell[row][col].element.setAttribute("hidden", "");
                     }
                 }
                 // toggle columns
                 for (let col = ColStart; col <= ColEnd; col++) {
                     if (Table[item.rowFound][col] === Table[item.rowTotal][col]) {
                         for (let row = item.rowHeader; row <= item.rowEndChar1; row++)
-                            HideBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
+                            ShowBlankCells ? Cell[row][col].element.setAttribute("hidden", "") : Cell[row][col].element.removeAttribute("hidden");
                     }
                 }
             }
@@ -619,6 +711,7 @@ async function main() {
 
     function ToggleFoundRemaining () {
         ShowRemaining = ShowRemaining ? false : true;
+        ShowRemaining ? setCookie("beehiveRemaining=true") : setCookie("beehiveRemaining=false");
         if (ShowRemaining) {
             El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b>TOTAL words</b>
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <strong><b>words REMAINING</b></strong>`;
@@ -627,6 +720,30 @@ async function main() {
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b>`;
         }
         DisplayTable ();
+        return;
+    }
+
+    function ToggleSubtotals () {
+        return;
+        SubTotalsAtTop = SubTotalsAtTop ? false : true;
+        SubTotalsAtTop ? setCookie("beehiveSubtotal=true") : setCookie("beehiveSubtotal=false");
+        debugger;
+        for (let row = 0; row < TableTotalRows; row++) {
+            for (let col = 0; col <= ColEnd; col++) {
+                Cell[row][col].element.style.color = 'black';
+                Cell[row][col].element.style.fontWeight = 'normal';
+                Cell[row][col].element.style.backgroundColor = "white";
+            }
+        }
+        Table = [];
+        TablePtrs = [];
+        Char2Row = {};
+        ColIndex = [0, 0, 0, 3];
+        WordsFound = 0;
+        PangramsFound = 0;
+        LetterList = "";
+        ProcessedWords = [];
+        InitializeHints();
         return;
     }
 
