@@ -246,8 +246,8 @@ async function main() {
         </table>
         <br><input id="hideEmptyCells" type="checkbox">&nbspShow empty data cells</input>
         <br><input id="showRemaining" type="checkbox">&nbspShow number of words remaining</input>
-        <br><input id="saveSettings" type="checkbox">&nbspSave above settings</input>
-        <br><br>Bee Hive Release 1.11
+        <br><input id="saveSettings" type="checkbox">&nbspSave settings</input>
+        <br><br>Bee Hive Release 1.12
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -342,7 +342,7 @@ async function main() {
     }
 
     function setCookie (name) {
-        document.cookie = name + "; max-age=5000";
+        document.cookie = name + "; max-age=700000";
         return;
     }
 
