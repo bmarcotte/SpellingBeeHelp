@@ -246,6 +246,7 @@ async function main() {
         </table>
         <br><input id="hideEmptyCells" type="checkbox">&nbspShow empty data cells</input>
         <br><input id="showRemaining" type="checkbox">&nbspShow number of words remaining</input>
+        <br><input id="subTotalsAtTop" type="checkbox">&nbspPlace subtotal line above letter tallies</input>
         <br><input id="saveSettings" type="checkbox">&nbspSave settings</input>
         <br><br>Bee Hive Release 1.12
         <style>
@@ -297,7 +298,6 @@ async function main() {
        `;
         return hintDiv;
     }
-    /* <br><input id="subTotalsAtTop" type="checkbox">&nbspPlace subtotal line above letter tallies</input> */
      
     /* ----- Saved Settings Cookie ----- */
     function RetrieveSavedSettings () {
@@ -437,14 +437,14 @@ async function main() {
         let indx = 0;               // iterates through TablePtrs and char1Table/char2Table
         let row = 3;
         for (let i = 0; i < char1Table.length; i++) {     // iterate over each char1Table row
-            TablePtrs[indx] = Object.assign({}, tblPtrObj);   // Spacers and header
+            TablePtrs[indx] = Object.assign({}, tblPtrObj);      // Spacers and header
             TablePtrs[indx].total = Number(char1Table[indx][char1Table[indx].length - 1]);
             Table.push(spacer);
             Table.push(spacer);
             Table.push(header);
             TablePtrs[indx].rowHeader = row - 1;
 
-            temp = ['', 'Σ', '#', 'Σ>'];                      // Section stats line (rowTotal)
+            temp = ['', 'Σ', '#', 'Σ>'];                // Section stats line (rowTotal)
             temp.length = ColEnd + 1;
             for (let j = 4; j <=  ColEnd; j++) {
                 temp[j] = char1Table[indx][j - 3];
@@ -453,15 +453,15 @@ async function main() {
             TablePtrs[indx].rowTotal = row;
             row++;
 
-            if (SubTotalsAtTop) {
-                temp = ['Σ', TablePtrs[indx].total, 0, '#>'];    // TablePtrs.rowFound
+            if (SubTotalsAtTop) {                       // TablePtrs.rowFound
+                temp = ['Σ', TablePtrs[indx].total, 0, '#>'];
                 temp.length = ColEnd + 1;
                 Table.push(temp);
                 TablePtrs[indx].rowFound = row;
                 row++;
             }
 
-            TablePtrs[indx].rowStartData = row;              // Char2 lines
+            TablePtrs[indx].rowStartData = row;          // Char2 lines
             for (let j = 0; j < char2Table[indx].length; j++) {
                 Char2Row[char2Table[indx][j]] = row;
                 temp = [char2Table[indx][j], char2Table[indx][j + 1], 0, '#>'];
@@ -472,15 +472,15 @@ async function main() {
             }
             TablePtrs[indx].rowEndData = row -1;
 
-            if (!SubTotalsAtTop) {
-                temp = ['Σ', TablePtrs[indx].total, 0, '#>'];    // TablePtrs.rowFound
+            if (!SubTotalsAtTop) {                      // TablePtrs.rowFound
+                temp = ['Σ', TablePtrs[indx].total, 0, '#>'];
                 temp.length = ColEnd + 1;
                 Table.push(temp);
                 TablePtrs[indx].rowFound = row;
                 row++;
             }
 
-            TablePtrs[i].rowEndChar1 = row - 1;             // end of section
+            TablePtrs[i].rowEndChar1 = row - 1;         // end of section
 
             // zero out tally area
             for (let row = TablePtrs[i].rowStartData; row <= TablePtrs[i].rowEndData; row++) {
@@ -679,7 +679,7 @@ async function main() {
     }
 
     function ToggleHiddenCells () {
-        ShowBlankCells = ShowBlankCells ? false : true; 
+        ShowBlankCells = !ShowBlankCells; 
         ShowBlankCells ? setCookie("beehiveBlank=true") : setCookie("beehiveBlank=false");
         TablePtrs.forEach(item => {
             if (item.total === item.found) {         // No Char1
@@ -709,7 +709,7 @@ async function main() {
     }
 
     function ToggleFoundRemaining () {
-        ShowRemaining = ShowRemaining ? false : true;
+        ShowRemaining = !ShowRemaining;
         ShowRemaining ? setCookie("beehiveRemaining=true") : setCookie("beehiveRemaining=false");
         if (ShowRemaining) {
             El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b>TOTAL words</b>
@@ -723,21 +723,55 @@ async function main() {
     }
 
     function ToggleSubtotals () {
-        SubTotalsAtTop = SubTotalsAtTop ? false : true;
+        let chr;            // row increment/decrement
+        let rowstart;
+        let rowend;
+        SubTotalsAtTop = !SubTotalsAtTop;
         SubTotalsAtTop ? setCookie("beehiveSubtotal=true") : setCookie("beehiveSubtotal=false");
+
+        // Table and TablePtrs
+        TablePtrs.forEach(item => {
+            const temp = Table[item.rowFound]
+            if (SubTotalsAtTop) {
+                chr = -1;
+                rowstart = item.rowEndChar1;
+                rowend = item.rowStartData;
+            } else {
+                chr = 1;
+                rowstart = item.rowFound;
+                rowend = item.rowEndChar1;
+            }
+            for (let row = rowstart; row != rowend; row += chr) {
+                Table[row] = Table[row + chr];
+            }
+            item.rowStartData -= chr;
+            item.rowEndData -= chr;
+            if (SubTotalsAtTop) {
+                item.rowFound = item.rowTotal + 1;
+            } else {
+                item.rowFound = item.rowEndChar1;
+            }
+            Table[item.rowFound] = temp;
+            let row;                // format--swap gray and bold eventually
+            SubTotalsAtTop ? row = item.rowEndChar1 : row = item.rowTotal + 1;
+            
+         })
+
+        // Char2Row
+        for (const char in Char2Row) {
+            Char2Row[char] += chr;
+        }
         debugger;
-        for (let row = 0; row < TableTotalRows; row++) {    // clear formatting
+
+       for (let row = 0; row < TableTotalRows; row++) {
             for (let col = 0; col <= ColEnd; col++) {
-                Cell[row][col].element.style.color = 'black';
                 Cell[row][col].element.style.fontWeight = 'normal';
                 Cell[row][col].element.style.backgroundColor = "white";
             }
         }
-        Table = [];
-        TablePtrs = []; // create 2 copies to flip
-        Char2Row = {};
-        // FormatCells ();
-        // DisplayTable ();
+        FormatCells ();
+
+        DisplayTable ();
         return;
     }
 
