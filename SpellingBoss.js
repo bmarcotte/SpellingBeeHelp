@@ -42,18 +42,17 @@ async function main() {
     //--------------------------------------
 
     /* ----- System data ----- */
-    const devicePhone = detectPhoneDevice();    // DEBUG: either should work, but w--.or-- will lose support
+    const devicePhone = detectPhoneDevice();    // DEBUG: either should work, but .orientation will lose support
     // const devicePhone = (window.orientation === 'undefined') ? false : true;
     const HintsHTML = await getHints();         // data from Spelling Bee page
     const hintDiv = setUpHintDiv();             // initialize DOM
-    let HTMLTableCreated = false;               // to prevent rerendering Table twice
+
     // Settings
     let ShowBlankCells = false;                 // toggle: show/hide empty data cells           
     let ShowRemaining = false;                  // toggle: show remaining vs found words
     let SubTotalsAtTop = false;                 // toggle: placement of subtotal line
     let SaveSetting = false;                    // toggle: save above in cookie
-
-    let kludge = true;
+    let KLUDGE = true;                          // DEBUG
 
     const El = {
         MetaStats1: document.getElementById('metastats1'),
@@ -214,7 +213,7 @@ async function main() {
         }
     }
 
-    /* ----- Create DOM for our added HTML ----- */
+    /* ----- Create DOM for added HTML ----- */
     function setUpHintDiv() {
         let gameScreen;
         if (devicePhone) {
@@ -246,7 +245,7 @@ async function main() {
             </tr></table>
         <table id="table0">
         </table>
-        <br><input id="hideEmptyCells" type="checkbox">&nbspShow empty data cells</input>
+        <br><input id="hideEmptyCells" type="checkbox">&nbspShow completed rows and columns</input>
         <br><input id="showRemaining" type="checkbox">&nbspShow number of words remaining</input>
         <br><input id="subTotalsAtTop" type="checkbox">&nbspPlace subtotal line above letter tallies</input>
         <br><input id="saveSettings" type="checkbox">&nbspSave settings</input>
@@ -313,18 +312,21 @@ async function main() {
             if (blank === "true") {
                 El.ShowBlankCells.click();
                 ToggleHiddenCells();
+                setCookie("beehiveBlank=true");
             } else {
                 setCookie("beehiveBlank=false");
             }
             if (remain === "true") {
                 El.ShowRemaining.click();
                 ToggleFoundRemaining();
+                setCookie("beehiveRemaining=true");
             } else {
                 setCookie("beehiveRemaining=false");
             }
             if (subTot === "true") {
                 El.SubTotalsAtTop.click();
                 SubTotalsAtTop = true;
+                setCookie("beehiveSubtotal=true");
             } else {
                 setCookie("beehiveSubtotal=false");
             }
@@ -368,7 +370,7 @@ async function main() {
         let wordLengths = [];       // word lengths, appended to header
         const paragraphs  = HintsHTML.querySelectorAll('p');
 
-        // MetaStats
+        // MetaStats (permanent)
         LetterList = paragraphs[1].textContent.replace(/\s/g, '').toUpperCase();
         temp = paragraphs[2].textContent.split(/[^0-9]+/);
             WordsTotal = +temp[1];
@@ -423,10 +425,7 @@ async function main() {
        // Create Table, TablePtrs, Char2Row (permanent data)
         CreateTableData(char1Table, char2Table, header, spacer);
 
-        if (!HTMLTableCreated) {
-            CreateHTMLTable();
-            HTMLTableCreated = true;
-        }
+        CreateHTMLTable();
         FormatCells();
         UpdateList();
         return;
@@ -712,7 +711,7 @@ async function main() {
                 }
             }
         });
-        if (kludge) DisplayTable();
+        if (KLUDGE) DisplayTable();
         return;
     }
 
@@ -801,9 +800,9 @@ async function main() {
     }
 
     function Kludge () {    // DEBUG - patch
-        kludge = false;
+        KLUDGE = false;
         ToggleHiddenCells ();
-        kludge = true;
+        KLUDGE = true;
         ToggleHiddenCells ();
         return;
     }
