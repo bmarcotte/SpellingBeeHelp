@@ -53,6 +53,8 @@ async function main() {
     let SubTotalsAtTop = false;                 // toggle: placement of subtotal line
     let SaveSetting = false;                    // toggle: save above in cookie
 
+    let kludge = true;
+
     const El = {
         MetaStats1: document.getElementById('metastats1'),
         MetaStats2: document.getElementById('metastats2'),
@@ -710,7 +712,7 @@ async function main() {
                 }
             }
         });
-        DisplayTable();
+        if (kludge) DisplayTable();
         return;
     }
 
@@ -724,8 +726,10 @@ async function main() {
             El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b><strong>TOTAL</strong> words</b>
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b>`;
         }
-        DisplayTable ();
-        return;
+        // DEBUG - patch
+        Kludge();
+        // DisplayTable ();
+    return;
     }
 
     function ToggleSubtotals () {
@@ -777,8 +781,8 @@ async function main() {
             for (let row = item.rowHeader + 1; row <= item.rowEndChar1; row++) {
                 Cell[row][0].element.style.color = 'black';
                 Cell[row][1].element.style.color = 'mediumvioletred';
-                // Cell[row][2].element.style.color = 'black';
-                // Cell[row][3].element.style.color = 'black';
+                Cell[row][2].element.style.color = 'black';
+                Cell[row][3].element.style.color = 'black';
             }
          })
 
@@ -787,9 +791,18 @@ async function main() {
             Char2Row[char] -= chr;
         }
 
-        DisplayTable ();
+        // DEBUG - patch
+        Kludge();
+        // DisplayTable ();
         return;
     }
 
+    function Kludge () {
+        kludge = false;
+        ToggleHiddenCells ();
+        kludge = true;
+        ToggleHiddenCells ();
+        return;
+    }
 }       // end of main function
 })();   // end of outer shell function
