@@ -687,7 +687,13 @@ async function main() {
                     for (let col = 0; col <= ColEnd; col++) 
                         ShowBlankCells ? Cell[row][col].element.removeAttribute("hidden") : Cell[row][col].element.setAttribute("hidden", "");
                 }
-            } else {        // otherwise check for individual rows and columns
+            } else {        // Oherwise check for individual rows and columns
+                // reset all cells to visible
+                for (let row = item.rowTotal + 1; row <= item.rowEndChar1; row++) {
+                    for (let col = 0; col <= ColEnd; col++) {
+                        Cell[row][col].element.removeAttribute("hidden");
+                    }
+                }
                 // toggle rows
                 for (let row = item.rowStartData; row <= item.rowEndData; row++) {
                     if (Table[row][1] === Table[row][2]) {
@@ -741,6 +747,7 @@ async function main() {
                 rowstart = item.rowFound;
                 rowend = item.rowEndChar1;
             }
+            // Move data rows
             for (let row = rowstart; row != rowend; row += chr) {
                 Table[row] = Table[row + chr];
             }
@@ -752,24 +759,33 @@ async function main() {
                 item.rowFound = item.rowEndChar1;
             }
             Table[item.rowFound] = temp;
-            let row;                // format--swap gray and bold eventually
-            SubTotalsAtTop ? row = item.rowEndChar1 : row = item.rowTotal + 1;
-            
+            // Fix format rowFound and tally area
+            let datarow;
+            SubTotalsAtTop ? datarow = item.rowEndChar1 : datarow = item.rowTotal + 1;
+            for (let col = ColStart; col <= ColEnd; col++) {
+                Cell[datarow][col].element.style.fontWeight = 'normal';
+                Cell[datarow][col].element.style.backgroundColor = "whitesmoke";
+                Cell[item.rowFound][col].element.style.fontWeight = 'bold';
+                Cell[item.rowFound][col].element.style.backgroundColor = "white";
+            }
+            // Reset colors
+            for (let row = item.rowTotal + 1; row <= item.rowEndChar1; row++) {
+                for (let col = 2; col <= ColEnd; col++) {
+                    Cell[row][col].element.style.color = 'black';
+                }
+            }
+            for (let row = item.rowHeader + 1; row <= item.rowEndChar1; row++) {
+                Cell[row][0].element.style.color = 'black';
+                Cell[row][1].element.style.color = 'mediumvioletred';
+                // Cell[row][2].element.style.color = 'black';
+                // Cell[row][3].element.style.color = 'black';
+            }
          })
 
         // Char2Row
         for (const char in Char2Row) {
-            Char2Row[char] += chr;
+            Char2Row[char] -= chr;
         }
-        debugger;
-
-       for (let row = 0; row < TableTotalRows; row++) {
-            for (let col = 0; col <= ColEnd; col++) {
-                Cell[row][col].element.style.fontWeight = 'normal';
-                Cell[row][col].element.style.backgroundColor = "white";
-            }
-        }
-        FormatCells ();
 
         DisplayTable ();
         return;
