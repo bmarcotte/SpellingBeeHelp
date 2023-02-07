@@ -727,8 +727,8 @@ async function main() {
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b>`;
         }
         // DEBUG - patch
-        Kludge();
-        // DisplayTable ();
+        // Kludge();
+        DisplayTable ();
     return;
     }
 
@@ -741,7 +741,6 @@ async function main() {
 
         // Table and TablePtrs
         TablePtrs.forEach(item => {
-            const temp = Table[item.rowFound]
             if (SubTotalsAtTop) {
                 chr = -1;
                 rowstart = item.rowEndChar1;
@@ -751,7 +750,9 @@ async function main() {
                 rowstart = item.rowFound;
                 rowend = item.rowEndChar1;
             }
+            
             // Move data rows
+            const temp = Table[item.rowFound]
             for (let row = rowstart; row != rowend; row += chr) {
                 Table[row] = Table[row + chr];
             }
@@ -763,6 +764,7 @@ async function main() {
                 item.rowFound = item.rowEndChar1;
             }
             Table[item.rowFound] = temp;
+
             // Fix format rowFound and tally area
             let datarow;
             SubTotalsAtTop ? datarow = item.rowEndChar1 : datarow = item.rowTotal + 1;
@@ -772,6 +774,7 @@ async function main() {
                 Cell[item.rowFound][col].element.style.fontWeight = 'bold';
                 Cell[item.rowFound][col].element.style.backgroundColor = "white";
             }
+
             // Reset colors
             for (let row = item.rowTotal + 1; row <= item.rowEndChar1; row++) {
                 for (let col = 2; col <= ColEnd; col++) {
@@ -781,8 +784,8 @@ async function main() {
             for (let row = item.rowHeader + 1; row <= item.rowEndChar1; row++) {
                 Cell[row][0].element.style.color = 'black';
                 Cell[row][1].element.style.color = 'mediumvioletred';
-                Cell[row][2].element.style.color = 'black';
-                Cell[row][3].element.style.color = 'black';
+                // Cell[row][2].element.style.color = 'black';
+                // Cell[row][3].element.style.color = 'black';
             }
          })
 
@@ -797,7 +800,7 @@ async function main() {
         return;
     }
 
-    function Kludge () {
+    function Kludge () {    // DEBUG - patch
         kludge = false;
         ToggleHiddenCells ();
         kludge = true;
