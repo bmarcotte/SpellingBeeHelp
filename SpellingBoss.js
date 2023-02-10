@@ -157,8 +157,8 @@ async function main() {
     let PangramsTotal = 0;
     let PangramsFound = 0;
     let TotalPoints = 0;
-    // let GeniusScore = await getGeniusScore();
-    let GeniusScore = "DK";
+    let GeniusScore = await getGeniusScore();
+    // let GeniusScore = "DK";
     
     // Words data
     let LetterList = "";        // needed to find pangrams
@@ -227,12 +227,11 @@ async function main() {
         //    return false ;
         // }
      }
-
     /* ----- Open Rankings pop-up for data ----- */
     async function getGeniusScore() {
         [...document.querySelectorAll(".pz-dropdown__menu-item")][1].click();
-        let element = await waitForElement('.sb-modal-list');
-        let score = element.querySelectorAll('li')[8].innerText.replace(/\D/g, '');        
+        let element = await waitForElement('.sb-modal-ranks__list');
+        let score = element.querySelectorAll('td')[3].innerText.replace(/\D/g, '');        
         document.querySelector('.sb-modal-close').click();
         return score;
 
