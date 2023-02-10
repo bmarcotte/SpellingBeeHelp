@@ -169,7 +169,8 @@ async function main() {
     // -------------------------------------
 
     /* ----- Retrieve saved settings ----- */
-    
+    RetrieveSavedSettings();
+
     /* ----- Insert our HTML and data into Spelling Bee ----- */
     InitializeHints ();
 
