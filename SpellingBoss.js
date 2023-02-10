@@ -7,7 +7,8 @@
 
     /* ----- Do not allow to launch more than once ----- */
     if (window.hiveLoaded) {
-        alert('Bee Hive program has already been loaded.\nPlease buzz on by (apian for continue).');
+        // alert('Bee Hive program has already been loaded.\nPlease buzz on by (apian for continue).');
+        customAlert ('Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).', 'PLEASE NOTE', 'Continue')
         return;
     }
     window.hiveLoaded = true;
@@ -31,6 +32,42 @@
         });
     }
 
+    function customAlert(text, title, button) {
+        const d = document;
+        if(d.getElementById("modalContainer")) return;
+    
+        let mObj = d.getElementsByTagName("body")[0].appendChild(d.createElement("div"));
+        mObj.id = "modalContainer";
+        mObj.style.height = d.documentElement.scrollHeight + "px";
+    
+        let alertObj = mObj.appendChild(d.createElement("div"));
+        alertObj.id = "alertBox";
+        if(d.all && !window.opera) alertObj.style.top = document.documentElement.scrollTop + "px";
+        alertObj.style.left = (d.documentElement.scrollWidth - alertObj.offsetWidth)/2 + "px";
+        alertObj.style.visiblity="visible";
+    
+        let h1 = alertObj.appendChild(d.createElement("h1"));
+        h1.appendChild(d.createTextNode(title));
+    
+        let msg = alertObj.appendChild(d.createElement("p"));
+        //msg.appendChild(d.createTextNode(txt));
+        msg.innerHTML = text;
+    
+        let btn = alertObj.appendChild(d.createElement("a"));
+        btn.id = "closeBtn";
+        btn.appendChild(d.createTextNode(button));
+        btn.href = "#";
+        btn.focus();
+        btn.onclick = function() { removeCustomAlert();return false; }
+    
+        alertObj.style.display = "block";
+        return;
+        
+        function removeCustomAlert() {
+            document.getElementsByTagName("body")[0].removeChild(document.getElementById("modalContainer"));
+        }
+      }
+      
 //======================================
 // MAIN FUNCTION
 //======================================
@@ -120,7 +157,8 @@ async function main() {
     let PangramsTotal = 0;
     let PangramsFound = 0;
     let TotalPoints = 0;
-    let GeniusScore = await getGeniusScore();
+    // let GeniusScore = await getGeniusScore();
+    let GeniusScore = "DK";
     
     // Words data
     let LetterList = "";        // needed to find pangrams
@@ -131,7 +169,6 @@ async function main() {
     // -------------------------------------
 
     /* ----- Retrieve saved settings ----- */
-    RetrieveSavedSettings ();
     
     /* ----- Insert our HTML and data into Spelling Bee ----- */
     InitializeHints ();
@@ -177,17 +214,17 @@ async function main() {
     /* ----- Detect device ----- */
     function detectPhoneDevice () {
         return false;
-        if (navigator.userAgent.match(/Android/i)
-        || navigator.userAgent.match(/webOS/i)
-        || navigator.userAgent.match(/iPhone/i)
-        || navigator.userAgent.match(/iPad/i)
-        || navigator.userAgent.match(/iPod/i)
-        || navigator.userAgent.match(/BlackBerry/i)
-        || navigator.userAgent.match(/Windows Phone/i)) {
-           return true ;
-        } else {
-           return false ;
-        }
+        // if (navigator.userAgent.match(/Android/i)
+        // || navigator.userAgent.match(/webOS/i)
+        // || navigator.userAgent.match(/iPhone/i)
+        // || navigator.userAgent.match(/iPad/i)
+        // || navigator.userAgent.match(/iPod/i)
+        // || navigator.userAgent.match(/BlackBerry/i)
+        // || navigator.userAgent.match(/Windows Phone/i)) {
+        //    return true ;
+        // } else {
+        //    return false ;
+        // }
      }
 
     /* ----- Open Rankings pop-up for data ----- */
@@ -249,7 +286,7 @@ async function main() {
         <br><input id="showRemaining" type="checkbox">&nbspShow number of words remaining</input>
         <br><input id="subTotalsAtTop" type="checkbox">&nbspPlace subtotal line above letter tallies</input>
         <br><input id="saveSettings" type="checkbox">&nbspSave settings</input>
-        <br><br>Bee Hive Release 1.12
+        <br><br>Bee Hive Release 1.2
         <style>
             #metastats1 {
                 font-family: Arial, Helvetica, sans-serif;
@@ -282,7 +319,6 @@ async function main() {
                 font-family: Arial, Helvetica, sans-serif;
                 font-size: medium;
             }
-
             #table0 td {
                 height: 1ch;
                 width: 3ch;
@@ -296,7 +332,59 @@ async function main() {
                 font-family: Arial, Helvetica, sans-serif;
                 font-size: 90%;
             }
-       `;
+            #modalContainer {
+                background-color:rgba(0, 0, 0, 0.3);
+                position:absolute;
+                width:100%;
+                height:100%;
+                top:0px;
+                left:0px;
+                z-index:10000;
+                background-image:url(tp.png); /* required by MSIE to prevent actions on lower z-index elements */
+            }
+            #alertBox {
+                position:relative;
+                width:300px;
+                min-height:100px;
+                margin-top:50px;
+                border:1px solid #666;
+                background-color:#fff;
+                background-repeat:no-repeat;
+                background-position:20px 30px;
+            }
+            #modalContainer > #alertBox {
+                position:fixed;
+            }
+            #alertBox h1 {
+                margin:0;
+                font:bold 0.9em verdana,arial;
+                background-color:#3073BB;
+                color:#FFF;
+                border-bottom:1px solid #000;
+                padding:2px 0 2px 5px;
+            }
+            #alertBox p {
+                font:0.8em verdana,arial;
+                height:50px;
+                padding-left:5px;
+                margin-left:20px;
+                margin-right:20px;
+            }
+            #alertBox #closeBtn {
+                display:block;
+                position:relative;
+                margin:5px auto;
+                padding:7px;
+                border:0 none;
+                width:75px;
+                font:0.8em verdana,arial;
+                text-align:center;
+                color:#FFF;
+                background-color:#357EBD;
+                border-radius: 3px;
+                text-decoration:none;
+            }
+                   `;
         return hintDiv;
     }
      
@@ -725,8 +813,6 @@ async function main() {
             El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b><strong>TOTAL</strong> words</b>
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b>`;
         }
-        // DEBUG - patch
-        // Kludge();
         DisplayTable ();
     return;
     }
