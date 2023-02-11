@@ -12,13 +12,13 @@
     }
     
     /* ----- Do not allow to launch more than once ----- */
-    if (window.hiveLoaded) {
+    else if (window.hiveLoaded) {
         customAlert ('The Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).',
         'PLEASE NOTE', 'Continue');
-    }    
-
-    fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))
-
+    } else {
+        fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))
+    }
+    
     function customAlert(text, title, button) {
         const d = document;
         if(d.getElementById("modalContainer")) return;
