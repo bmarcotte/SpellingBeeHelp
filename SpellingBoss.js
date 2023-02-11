@@ -7,14 +7,16 @@
 
     /* ----- Launch only from NYT Spelling Bee website ----- */
     if (document.URL !== 'https://www.nytimes.com/puzzles/spelling-bee') {
-        customAlert('This bookmarklet can only be launched from NYT Spelling Bee',
-        'ATTENTION', 'OK');
+        alert('This bookmarklet can only be launched from NYT Spelling Bee');
+        // customAlert('This bookmarklet can only be launched from NYT Spelling Bee',
+        // 'ATTENTION', 'OK');
     }
     
     /* ----- Do not allow to launch more than once ----- */
     else if (window.hiveLoaded) {
-        customAlert ('The Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).',
-        'PLEASE NOTE', 'Continue');
+        alert('The Bee Hive program has already been loaded.');
+        // customAlert ('The Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).',
+        // 'PLEASE NOTE', 'Continue');
     } else {
         fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/BeeHive.js').then(r => r.text()).then(t => eval(t))
     }
