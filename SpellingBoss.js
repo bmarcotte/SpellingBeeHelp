@@ -18,7 +18,7 @@
         // customAlert ('The Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).',
         // 'PLEASE NOTE', 'Continue');
     } else {
-        fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/BeeHive.js').then(r => r.text()).then(t => eval(t))
+        fetch('https://raw.githubusercontent.com/bmarcotte/SpellingBeeHelp/main/BeeHive.js').then(r => r.text()).then(t => eval(t))
     }
     
     function customAlert(text, title, button) {
