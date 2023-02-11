@@ -8,10 +8,16 @@
     /* ----- Do not allow to launch more than once ----- */
     if (window.hiveLoaded) {
         // alert('Bee Hive program has already been loaded.\nPlease buzz on by (apian for continue).');
-        customAlert ('Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).', 'PLEASE NOTE', 'Continue')
+        customAlert ('The Bee Hive program has already been loaded.  Please buzz on by (Apian language for continue).', 'PLEASE NOTE', 'Continue')
         return;
     }
     window.hiveLoaded = true;
+
+    if (document.URL === 'https://www.nytimes.com/puzzles/spelling-bee') {
+        fetch('https://raw.githubusercontent.com/PostDoc71/SpellingBeeHelp/main/SpellingBoss.js').then(r => r.text()).then(t => eval(t))
+    } else {
+        window.alert('This bookmarklet can only be launched from NYT Spelling Bee')
+    }
 
     /* ----- Do not launch while on Welcome or Queen Bee pages ----- */
     await waitForCondition(
@@ -50,7 +56,7 @@
         h1.appendChild(d.createTextNode(title));
     
         let msg = alertObj.appendChild(d.createElement("p"));
-        //msg.appendChild(d.createTextNode(txt));
+        //msg.appendChild(d.createTextNode(text));
         msg.innerHTML = text;
     
         let btn = alertObj.appendChild(d.createElement("a"));
@@ -158,7 +164,6 @@ async function main() {
     let PangramsFound = 0;
     let TotalPoints = 0;
     let GeniusScore = await getGeniusScore();
-    // let GeniusScore = "DK";
     
     // Words data
     let LetterList = "";        // needed to find pangrams
@@ -332,63 +337,12 @@ async function main() {
                 font-family: Arial, Helvetica, sans-serif;
                 font-size: 90%;
             }
-            #modalContainer {
-                background-color:rgba(0, 0, 0, 0.3);
-                position:absolute;
-                width:100%;
-                height:100%;
-                top:0px;
-                left:0px;
-                z-index:10000;
-                background-image:url(tp.png); /* required by MSIE to prevent actions on lower z-index elements */
-            }
-            #alertBox {
-                position:relative;
-                width:300px;
-                min-height:100px;
-                margin-top:50px;
-                border:1px solid #666;
-                background-color:#fff;
-                background-repeat:no-repeat;
-                background-position:20px 30px;
-            }
-            #modalContainer > #alertBox {
-                position:fixed;
-            }
-            #alertBox h1 {
-                margin:0;
-                font:bold 0.9em verdana,arial;
-                background-color:#3073BB;
-                color:#FFF;
-                border-bottom:1px solid #000;
-                padding:2px 0 2px 5px;
-            }
-            #alertBox p {
-                font:0.8em verdana,arial;
-                height:50px;
-                padding-left:5px;
-                margin-left:20px;
-                margin-right:20px;
-            }
-            #alertBox #closeBtn {
-                display:block;
-                position:relative;
-                margin:5px auto;
-                padding:7px;
-                border:0 none;
-                width:75px;
-                font:0.8em verdana,arial;
-                text-align:center;
-                color:#FFF;
-                background-color:#357EBD;
-                border-radius: 3px;
-                text-decoration:none;
-            }
+            </style>
                    `;
         return hintDiv;
     }
-     
-    /* ----- Saved Settings Cookie ----- */
+
+/* ----- Saved Settings Cookie ----- */
     function RetrieveSavedSettings () {
         let setting = getCookie("beehiveSetting");
         if (setting === "true") { 
@@ -808,7 +762,7 @@ async function main() {
         ShowRemaining ? setCookie("beehiveRemaining=true") : setCookie("beehiveRemaining=false");
         if (ShowRemaining) {
             El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b>TOTAL words</b>
-            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <strong><b>words REMAINING</b></strong>`;
+            <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <strong><b>REMAINING words</b></strong>`;
         } else {
             El.Legend.innerHTML = `Σ = <font color="mediumvioletred"><b><strong>TOTAL</strong> words</b>
             <font color="black">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp# = <b>words FOUND</b>`;
